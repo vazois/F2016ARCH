@@ -13,6 +13,15 @@ Register::Register(void) {
 
 }
 
+void Register::update(int registerNumber){
+	if( registerNumber != -1 ){
+		dataValue = registerFile[registerNumber].dataValue;
+		registerNumber = registerNumber;
+	}
+}
+
+/////////////////////////////
+// Instruction Implementation
 Instruction::Instruction(void) {
 
 	type = NOP;
@@ -72,7 +81,10 @@ Instruction::Instruction(std::string newInst) {
 
 	stage = NONE;
 }
+/////////////////////////////
 
+/////////////////////////////
+// Application Implementation
 Application::Application(void) {
 
 	PC = 0;
@@ -133,24 +145,45 @@ Instruction* Application::getNextInstruction() {
 	
 	return nextInst;
 }
+/////////////////////////////
 
+/////////////////////////////
+// Pipeline Stage
 PipelineStage::PipelineStage(void) {
 	inst = new Instruction();
 	stageType = NONE;	
 }
 
 void PipelineStage::clear() {
-	
 	inst = NULL;
-
 }
 
 void PipelineStage::addInstruction(Instruction *newInst) {
-
 	inst = newInst;
 	inst->stage = stageType;
 }
+/////////////////////////////
 
+/////////////////////////////
+//PipelineStageRegister
+PipelineStageRegister::PipelineStageRegister(void){
+	inst = new Instruction();
+	stageType = NONE;
+	rs = new Register(); rs->registerName = "Rs";
+	rt = new Register(); rt->registerName = "Rt";
+	rd = new Register(); rd->registerName = "Rd";
+}
+
+void PipelineStageRegister::clear(){
+	inst = NULL;
+	rs = NULL;
+	rt = NULL;
+	rd = NULL;
+}
+/////////////////////////////
+
+/////////////////////////////
+// Pipeline Implementation
 Pipeline::Pipeline(Application *app) {
 
 	pipeline[FETCH].stageType = FETCH;
@@ -159,6 +192,12 @@ Pipeline::Pipeline(Application *app) {
 	pipeline[MEM].stageType = MEM;
 	pipeline[WB].stageType = WB;
 	cycleTime = 0;
+
+	//No FETCH Register// IF/ID maps to ID// ID/EXEC maps to EXEC // EXEC/MEM maps to MEM // MEM/WB maps to WB
+	pipelineStageRegister[DECODE].stageType = DECODE;
+	pipelineStageRegister[EXEC].stageType = EXEC;
+	pipelineStageRegister[MEM].stageType = MEM;
+	pipelineStageRegister[WB].stageType = WB;
 
 	printPipeline();
 
@@ -194,45 +233,116 @@ bool Pipeline::hasDependency(void) {
 
 }
 
-void Pipeline::cycle(void) {
+bool Pipeline::forward(){
+	if(pipeline[DECODE].inst == NULL)//NULL instruction means no dependency so continue execution
+		return true;
+	if(pipeline[DECODE].inst->type == NOP)//NOP instruction means no dependency so continue execution
+		return true;
 
+	//Forwarding logic
+	if(pipeline[MEM].inst->dest != -1 && ( pipeline[MEM].inst->dest == pipeline[DECODE].inst->src1 ) ){//Dependency on first operand
+		if(pipeline[MEM].inst->type == LW){//LW instructions have to wait until the end of MEM stage
+			return false;
+		}else if(pipeline[MEM].inst->type == SW){// Data operand of SW is forwarded from EX stage
+			if(pipeline[DECODE].inst->type == LW){// LW has to wait for MEM stage to finish before value is forwarded
+				return false;
+			}else{
+				return true;
+			}
+		}else{
+			//Update ID/EX register with forwarded value
+			return true;
+		}
+	}else if(pipeline[MEM].inst->dest != -1 && ( pipeline[MEM].inst->dest == pipeline[DECODE].inst->src2 ) ){//Dependency on second operand
+		if(pipeline[MEM].inst->type == LW){//LW instructions have to wait until the end of MEM stage
+			return false;
+		}else if(pipeline[MEM].inst->type == SW){// Address operand of SW is forwarded from EX
+			if(pipeline[DECODE].inst->type == LW){// LW has to wait for MEM stage to finish before value is forwarded
+				return false;
+			}else{
+				return true;
+			}
+		}else{
+			//Update ID/EX register with forwarded value
+			return true;
+		}
+	}else if( pipeline[WB].inst->dest != -1 && ( pipeline[WB].inst->dest == pipeline[DECODE].inst->src1 ) ){//Dependency on first operand
+		//Update ID/EX register with forwarded value
+
+		return true;
+	}else if( pipeline[WB].inst->dest != -1 && ( pipeline[WB].inst->dest == pipeline[DECODE].inst->src2 ) ){//Dependency on second operand
+		//Update ID/EX register with forwarded value
+		return true;
+	}
+
+	/*if(pipeline[MEM].inst->dest != -1 &&
+			( pipeline[MEM].inst->dest == pipeline[DECODE].inst->src1 ) ||
+			( pipeline[MEM].inst->dest == pipeline[DECODE].inst->src2 )
+		){//EX/MEM PRIORITY OVER MEM/WB stage
+		//forward EX/MEM
+		//need to update ID/EX register
+		//forward if ALU instruction
+		//Wait if LW
+		if(pipeline[DECODE].inst->type == LW ){
+			return false;
+		}else{
+			return true;
+		}
+	}else if( pipeline[WB].inst->dest != -1 &&
+			 ( pipeline[WB].inst->dest == pipeline[DECODE].inst->src1 ) ||
+			 ( pipeline[WB].inst->dest == pipeline[DECODE].inst->src2 )
+		){
+		//forward MEM/WB
+		//need to update ID/EX register
+		return true;
+	}*/
+
+	//if no dependency do not change the ID/EX register
+	return true;
+}
+
+void Pipeline::cycle(void) {
 	cycleTime += 1;
 
-
 	// Writeback
-	pipeline[WB].clear();
-
-	// Mem -> WB
-	pipeline[WB].addInstruction(pipeline[MEM].inst);	
+	pipeline[WB].clear();//Clear earlier instruction
+	pipeline[WB].addInstruction(pipeline[MEM].inst);//Add new instruction
 
 	// Mem
-	pipeline[MEM].clear();
-	
-	// Exec -> Mem
-	pipeline[MEM].addInstruction(pipeline[EXEC].inst);	
+	pipeline[MEM].clear();//Clear earlier instruction
+	pipeline[MEM].addInstruction(pipeline[EXEC].inst);//Add new instruction
 	
 	// Exec
-	pipeline[EXEC].clear();
-
 	// Check for data hazards
-	if(hasDependency()){
-		// If dependency detected, stall by inserting NOP instruction
-		pipeline[EXEC].addInstruction(new Instruction());
-		return;
+	if(this->forwarding){
+		pipeline[EXEC].clear();//Clear earlier instruction
+		if(!forward()){//Check if forwarding is possible
+			pipeline[EXEC].addInstruction(new Instruction());
+			return;
+		}
+		pipeline[EXEC].addInstruction(pipeline[DECODE].inst);
+	}else if(!this->forwarding){
+		pipeline[EXEC].clear();//Clear earlier instruction
+		if(hasDependency()){//Stall if dependency detected
+			pipeline[EXEC].addInstruction(new Instruction());
+			return;
+		}
+		pipeline[EXEC].addInstruction(pipeline[DECODE].inst);//Add new instruction
 	}
-	
-	// Decode -> Exec
-	pipeline[EXEC].addInstruction(pipeline[DECODE].inst);	
+
 	
 	// Decode 
-	pipeline[DECODE].clear();
-	
-	// Fetch -> Decode
-	pipeline[DECODE].addInstruction(pipeline[FETCH].inst);	
+	pipeline[DECODE].clear();//Clear earlier instruction
+	pipeline[DECODE].addInstruction(pipeline[FETCH].inst);//Add new instruction
+	pipelineStageRegister[EXEC].inst = pipelineStageRegister[DECODE].inst; //Prepare ID/EX Register
+	pipelineStageRegister[EXEC].rs->update(pipelineStageRegister[EXEC].inst->src1);
+	pipelineStageRegister[EXEC].rt->update(pipelineStageRegister[EXEC].inst->src2);
+	//pipelineStageRegister[EXEC].rd->update(pipelineStageRegister[EXEC].inst->dest);
 	
 	// Fetch
-	pipeline[FETCH].clear();
-	pipeline[FETCH].addInstruction(application->getNextInstruction());
+	pipeline[FETCH].clear();//Clear earlier instruction
+	pipeline[FETCH].addInstruction(application->getNextInstruction());//Add new instruction
+	pipelineStageRegister[DECODE].inst = pipeline[FETCH].inst;//Prepare IF/ID
 }
 
 bool Pipeline::done() {

@@ -1,6 +1,7 @@
 #include <iostream>
 #include "unistd.h"
 #include "pipeline.h"
+#include <cstdio>
 
 using namespace std;
 
@@ -14,7 +15,7 @@ int main(int argc, char *argv[]) {
         {
             case 'f': forwarding = true; break;
             case 'i': fileName.assign(optarg); break;
-            case '?': fprintf(stderr, "usuage is \n -i fileName : to run input file fileName \n -f : for enabling forwarding ");
+            case '?': fprintf(stderr, "usuage is \n -i : fileName : to run input file fileName \n -f : for enabling forwarding \n"); return 0;
             default: cout<<endl; abort();
         }
 
@@ -26,7 +27,7 @@ int main(int argc, char *argv[]) {
 	pipeline.forwarding = forwarding;
 
 	do {
-		pipeline.cycle();
+		pipeline.cycle();//Resolve pipeline state
 		pipeline.printPipeline();
 
 	} while(!pipeline.done());

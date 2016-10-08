@@ -1,5 +1,6 @@
 #include <string>
 #include <vector>
+#include <cstdlib>
 
 
 /* Types of possible instruction types */
@@ -36,6 +37,7 @@ class Register {
 		int dataValue;
 		int registerNumber;
 		std::string registerName;
+		void update(int registerNumber);
 };
 
 /* Register file with 16 registers */
@@ -64,6 +66,17 @@ class Application {
 		int PC; 
 };
 
+class PipelineStageRegister{
+
+	public:
+		PipelineStageRegister();
+		Stage stageType;
+		Instruction *inst;
+		Register *rs;
+		Register *rt;
+		Register *rd;
+		void clear();
+};
 
 class PipelineStage {
 
@@ -84,6 +97,8 @@ class Pipeline {
 		int cycleTime;
 		Application *application;
 		PipelineStage pipeline[5];
+		PipelineStageRegister pipelineStageRegister[5];//
+		bool forward();
 		void cycle();
 		void printPipeline();
 		bool done();
