@@ -239,14 +239,35 @@ bool Pipeline::forward(){
 	if(pipeline[DECODE].inst->type == NOP)//NOP instruction means no dependency so continue execution
 		return true;
 
+
+	//Forwarding logic //Always forward the most recent value
+	if(pipeline[MEM].inst->dest != -1 &&
+			( pipeline[MEM].inst->dest == pipeline[DECODE].inst->src1 ) ||
+			( pipeline[MEM].inst->dest == pipeline[DECODE].inst->src2 )
+		){//Dependency detected between ID/EX and EX/MEM stage
+		if(pipeline[MEM].inst->type == LW){//LW instructions forward at MEM/WB stage
+			return false;
+		}else{
+			//Forward correct values
+			return true;
+		}
+	}else if(pipeline[WB].inst->dest != -1 &&
+			( pipeline[WB].inst->dest == pipeline[DECODE].inst->src1 ) ||
+			( pipeline[WB].inst->dest == pipeline[DECODE].inst->src2 )
+		){//Dependency detected between ID/EX and MEM/WB stage
+
+		//Forward correct values
+		return true;
+	}
+
 	//Forwarding logic
-	if(pipeline[MEM].inst->dest != -1 && ( pipeline[MEM].inst->dest == pipeline[DECODE].inst->src1 ) ){//Dependency on first operand
+	/*if(pipeline[MEM].inst->dest != -1 && ( pipeline[MEM].inst->dest == pipeline[DECODE].inst->src1 ) ){//Dependency on first operand
 		if(pipeline[MEM].inst->type == LW){//LW instructions have to wait until the end of MEM stage
 			return false;
 		}else if(pipeline[MEM].inst->type == SW){// Data operand of SW is forwarded from EX stage
-			if(pipeline[DECODE].inst->type == LW){// LW has to wait for MEM stage to finish before value is forwarded
+			if(pipeline[DECODE].inst->type == LW){// LW has to wait for MEM stage to finish before value can be forwarded
 				return false;
-			}else{
+			}else{//Every instruction can proceed
 				return true;
 			}
 		}else{
@@ -257,9 +278,9 @@ bool Pipeline::forward(){
 		if(pipeline[MEM].inst->type == LW){//LW instructions have to wait until the end of MEM stage
 			return false;
 		}else if(pipeline[MEM].inst->type == SW){// Address operand of SW is forwarded from EX
-			if(pipeline[DECODE].inst->type == LW){// LW has to wait for MEM stage to finish before value is forwarded
+			if(pipeline[DECODE].inst->type == LW){// LW has to wait for MEM stage to finish before value can be forwarded
 				return false;
-			}else{
+			}else{//Every instruction can proceed
 				return true;
 			}
 		}else{
@@ -272,28 +293,6 @@ bool Pipeline::forward(){
 		return true;
 	}else if( pipeline[WB].inst->dest != -1 && ( pipeline[WB].inst->dest == pipeline[DECODE].inst->src2 ) ){//Dependency on second operand
 		//Update ID/EX register with forwarded value
-		return true;
-	}
-
-	/*if(pipeline[MEM].inst->dest != -1 &&
-			( pipeline[MEM].inst->dest == pipeline[DECODE].inst->src1 ) ||
-			( pipeline[MEM].inst->dest == pipeline[DECODE].inst->src2 )
-		){//EX/MEM PRIORITY OVER MEM/WB stage
-		//forward EX/MEM
-		//need to update ID/EX register
-		//forward if ALU instruction
-		//Wait if LW
-		if(pipeline[DECODE].inst->type == LW ){
-			return false;
-		}else{
-			return true;
-		}
-	}else if( pipeline[WB].inst->dest != -1 &&
-			 ( pipeline[WB].inst->dest == pipeline[DECODE].inst->src1 ) ||
-			 ( pipeline[WB].inst->dest == pipeline[DECODE].inst->src2 )
-		){
-		//forward MEM/WB
-		//need to update ID/EX register
 		return true;
 	}*/
 

@@ -1,0 +1,3 @@
+LW r1 r2
+LW r3 r5
+ADD r4 r1 r3
