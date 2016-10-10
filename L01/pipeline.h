@@ -28,7 +28,10 @@ enum Stage {
 	NONE
 };
 
+
 const std::string stageNames[6] = {"FETCH", "DECODE", "EXEC", "MEM", "WB", "NONE"};
+
+const std::string stageRegisters[5] = {"NONE","IF/ID","ID/EX","EX/MEM","MEM/WB"};
 
 /* A Single Register Entry containing register number and register data value */
 class Register {
@@ -78,6 +81,20 @@ class PipelineStageRegister{
 		void clear();
 };
 
+class ForwardInfo{
+	public:
+		ForwardInfo();
+		Instruction *Id;
+		Instruction *Is;
+		Stage srcStage;
+
+		int forwardingRegister;
+		int cycleTime;
+
+		void clear();
+		void printInfo();
+};
+
 class PipelineStage {
 
 	public:
@@ -97,13 +114,16 @@ class Pipeline {
 		int cycleTime;
 		Application *application;
 		PipelineStage pipeline[5];
-		PipelineStageRegister pipelineStageRegister[5];//
 		bool forward();
 		void cycle();
 		void printPipeline();
 		bool done();
 		bool hasDependency();
 		bool forwarding;
+
+		//Added functionality
+		PipelineStageRegister pipelineStageRegister[5];//
+		ForwardInfo *forwardInfo;
 };
 
 

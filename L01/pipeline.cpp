@@ -183,6 +183,31 @@ void PipelineStageRegister::clear(){
 /////////////////////////////
 
 /////////////////////////////
+//ForwardInfo
+ForwardInfo::ForwardInfo(){
+	Id = NULL;
+	Is = NULL;
+	srcStage = NONE;
+	forwardingRegister = -1;
+	cycleTime = -1;
+}
+
+void ForwardInfo::clear(){
+	Id = NULL;
+	Is = NULL;
+	srcStage = NONE;
+	forwardingRegister = -1;
+	cycleTime = -1;
+}
+
+void ForwardInfo::printInfo(){
+	if( srcStage != NONE ){
+		std::cout << "\t" <<stageRegisters[srcStage] << " >> " << stageRegisters[DECODE];
+		std::cout << " : " << "("<<instructionNames[Is->type]<<","<<instructionNames[Id->type]<<",r" << forwardingRegister <<")";
+	}
+}
+
+/////////////////////////////
 // Pipeline Implementation
 Pipeline::Pipeline(Application *app) {
 
@@ -199,12 +224,11 @@ Pipeline::Pipeline(Application *app) {
 	pipelineStageRegister[MEM].stageType = MEM;
 	pipelineStageRegister[WB].stageType = WB;
 
+	forwardInfo = new ForwardInfo();
+
 	printPipeline();
-
 	application = app;
-
 	forwarding = false;
-
 }
 
 bool Pipeline::hasDependency(void) {
@@ -241,60 +265,36 @@ bool Pipeline::forward(){
 
 
 	//Forwarding logic //Always forward the most recent value
-	if(pipeline[MEM].inst->dest != -1 &&
-			( pipeline[MEM].inst->dest == pipeline[DECODE].inst->src1 ) ||
-			( pipeline[MEM].inst->dest == pipeline[DECODE].inst->src2 )
+	if( (pipeline[MEM].inst->dest != -1) &&
+			( (pipeline[MEM].inst->dest == pipeline[DECODE].inst->src1) ||
+			  (pipeline[MEM].inst->dest == pipeline[DECODE].inst->src2) )
 		){//Dependency detected between ID/EX and EX/MEM stage
+
 		if(pipeline[MEM].inst->type == LW){//LW instructions forward at MEM/WB stage
 			return false;
 		}else{
 			//Forward correct values
+			forwardInfo->Id = pipeline[DECODE].inst;
+			forwardInfo->Is = pipeline[MEM].inst;
+			forwardInfo->srcStage = MEM;
+			forwardInfo->cycleTime = cycleTime;
+			forwardInfo->forwardingRegister = pipeline[MEM].inst->dest;
+
 			return true;
 		}
-	}else if(pipeline[WB].inst->dest != -1 &&
-			( pipeline[WB].inst->dest == pipeline[DECODE].inst->src1 ) ||
-			( pipeline[WB].inst->dest == pipeline[DECODE].inst->src2 )
+	}else if( (pipeline[WB].inst->dest != -1) &&
+			  ( (pipeline[WB].inst->dest == pipeline[DECODE].inst->src1) ||
+			    (pipeline[WB].inst->dest == pipeline[DECODE].inst->src2) )
 		){//Dependency detected between ID/EX and MEM/WB stage
-
 		//Forward correct values
+		forwardInfo->Id = pipeline[DECODE].inst;
+		forwardInfo->Is = pipeline[WB].inst;
+		forwardInfo->srcStage = WB;
+		forwardInfo->cycleTime = cycleTime;
+		forwardInfo->forwardingRegister = pipeline[WB].inst->dest;
+
 		return true;
 	}
-
-	//Forwarding logic
-	/*if(pipeline[MEM].inst->dest != -1 && ( pipeline[MEM].inst->dest == pipeline[DECODE].inst->src1 ) ){//Dependency on first operand
-		if(pipeline[MEM].inst->type == LW){//LW instructions have to wait until the end of MEM stage
-			return false;
-		}else if(pipeline[MEM].inst->type == SW){// Data operand of SW is forwarded from EX stage
-			if(pipeline[DECODE].inst->type == LW){// LW has to wait for MEM stage to finish before value can be forwarded
-				return false;
-			}else{//Every instruction can proceed
-				return true;
-			}
-		}else{
-			//Update ID/EX register with forwarded value
-			return true;
-		}
-	}else if(pipeline[MEM].inst->dest != -1 && ( pipeline[MEM].inst->dest == pipeline[DECODE].inst->src2 ) ){//Dependency on second operand
-		if(pipeline[MEM].inst->type == LW){//LW instructions have to wait until the end of MEM stage
-			return false;
-		}else if(pipeline[MEM].inst->type == SW){// Address operand of SW is forwarded from EX
-			if(pipeline[DECODE].inst->type == LW){// LW has to wait for MEM stage to finish before value can be forwarded
-				return false;
-			}else{//Every instruction can proceed
-				return true;
-			}
-		}else{
-			//Update ID/EX register with forwarded value
-			return true;
-		}
-	}else if( pipeline[WB].inst->dest != -1 && ( pipeline[WB].inst->dest == pipeline[DECODE].inst->src1 ) ){//Dependency on first operand
-		//Update ID/EX register with forwarded value
-
-		return true;
-	}else if( pipeline[WB].inst->dest != -1 && ( pipeline[WB].inst->dest == pipeline[DECODE].inst->src2 ) ){//Dependency on second operand
-		//Update ID/EX register with forwarded value
-		return true;
-	}*/
 
 	//if no dependency do not change the ID/EX register
 	return true;
@@ -302,6 +302,8 @@ bool Pipeline::forward(){
 
 void Pipeline::cycle(void) {
 	cycleTime += 1;
+
+	forwardInfo->clear();
 
 	// Writeback
 	pipeline[WB].clear();//Clear earlier instruction
@@ -333,15 +335,15 @@ void Pipeline::cycle(void) {
 	// Decode 
 	pipeline[DECODE].clear();//Clear earlier instruction
 	pipeline[DECODE].addInstruction(pipeline[FETCH].inst);//Add new instruction
-	pipelineStageRegister[EXEC].inst = pipelineStageRegister[DECODE].inst; //Prepare ID/EX Register
+	/*pipelineStageRegister[EXEC].inst = pipelineStageRegister[DECODE].inst; //Prepare ID/EX Register
 	pipelineStageRegister[EXEC].rs->update(pipelineStageRegister[EXEC].inst->src1);
-	pipelineStageRegister[EXEC].rt->update(pipelineStageRegister[EXEC].inst->src2);
+	pipelineStageRegister[EXEC].rt->update(pipelineStageRegister[EXEC].inst->src2);*/
 	//pipelineStageRegister[EXEC].rd->update(pipelineStageRegister[EXEC].inst->dest);
 	
 	// Fetch
 	pipeline[FETCH].clear();//Clear earlier instruction
 	pipeline[FETCH].addInstruction(application->getNextInstruction());//Add new instruction
-	pipelineStageRegister[DECODE].inst = pipeline[FETCH].inst;//Prepare IF/ID
+	//pipelineStageRegister[DECODE].inst = pipeline[FETCH].inst;//Prepare IF/ID
 }
 
 bool Pipeline::done() {
@@ -353,20 +355,24 @@ bool Pipeline::done() {
 
 	}
 
-
 	return true;
-
 }
 
 void Pipeline::printPipeline(void) {
 
-	if(cycleTime == 0)
-		std::cout << "Cycle" << "\tIF" << "\t\tID" << "\t\tEXEC" << "\t\tMEM" << "\t\tWB" << std::endl;
+	if(cycleTime == 0){
+		std::cout << "Cycle" << "\tIF" << "\t\tID" << "\t\tEXEC" << "\t\tMEM" << "\t\tWB";
+		if(forwarding) std::cout <<"\t\tForwarding";
+		std::cout << std::endl;
+	}
 	std:: cout << cycleTime; 
 	for(int i = 0; i < 5; i++) {
 		
 		pipeline[i].printStage();
 
+	}
+	if(forwarding){
+		forwardInfo->printInfo();
 	}
 	std::cout << std::endl;
 }
@@ -375,6 +381,7 @@ void PipelineStage::printStage(void) {
 
 	std::cout << "\t";
 	inst->printInstruction();
+
 
 }
 
@@ -387,4 +394,5 @@ void Instruction::printInstruction(void) {
 		std::cout << instructionNames[type] << " r" << dest << " r" << src1;
 	else 
 		std::cout << instructionNames[type] << " r" << dest << " r" << src1 << " r" << src2;
+
 }
