@@ -87,7 +87,6 @@ def sim_trace(trace):
 	mispred_count = 0
 	iter = 0
 	for branch in trace:
-		
 		real = branch[1]
 		addr = addrIndex(branch[0])
 		
@@ -110,6 +109,7 @@ def sim_trace(trace):
 		
 		#print table[ghr][addr]
 		
+		#{CHECK IF SHIFT IS CORRECT}
 		ghr = ((ghr << 1) or (real << 1)) and M_MASK # shift the real outcome in and keep the M newest branch outcomes
 		
 		
