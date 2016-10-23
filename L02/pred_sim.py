@@ -69,7 +69,7 @@ def processTraceFile(filename):
 #								#
 #################################
 def sim_trace(trace):
-	global M,N,ADDR_BITS, ADDR_MASK
+	global M,N,M_MASK,ADDR_BITS, ADDR_MASK
 	tables = 1 << M
 	entries = 1 << ADDR_BITS
 	
@@ -97,6 +97,8 @@ def sim_trace(trace):
 		#print hex(branch[0]), branch[1], ghr,addr, pred,
 		#print "Misprediction:",mispred
 		
+		
+		#print "r:",real,"p:",pred,"g:",ghr,"i:",iter/3
 
 		if mispred:
 			mispred_count = mispred_count + 1
@@ -105,12 +107,13 @@ def sim_trace(trace):
 			table[ghr][addr] = ssub(state)
 		else:
 			table[ghr][addr] = sadd(state)
-			
+		
+		
 		
 		#print table[ghr][addr]
 		
 		#{CHECK IF SHIFT IS CORRECT}
-		ghr = ((ghr << 1) or (real << 1)) and M_MASK # shift the real outcome in and keep the M newest branch outcomes
+		ghr = ((ghr << 1) | (real)) & M_MASK # shift the real outcome in and keep the M newest branch outcomes
 		
 		
 		
@@ -147,11 +150,11 @@ trace = processTraceFile(filename)
 
 
 print "M bits:",M
-print "M mask:",M_MASK
+print "M mask:",hex(M_MASK)
 print "N bits:",N
-print "N mask:",N_MASK
+print "N mask:",hex(N_MASK)
 
-print "PC address mask:",ADDR_BITS
+print "PC address bits:",ADDR_BITS
 print "PC address mask:",hex(ADDR_MASK)
 
 
