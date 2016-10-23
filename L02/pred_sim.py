@@ -6,20 +6,24 @@ import sys
 #								#
 #################################
 
-ADDR_BITS = 6
-ADDR_MASK = 0x3f
+def mask(bits):
+	return (1 << bits) - 1
 
-M = 0
-N = 0
-M_MASK=0
-N_MASK=0
+ADDR_BITS = 6
+ADDR_MASK = mask(ADDR_BITS)
+
+M = 4
+N = 2
+M_MASK=mask(M)
+N_MASK=mask(N)
+
+HR_BITS = 4
+HR_MASK = mask(HR_BITS)
 
 def decode(state):
 	global N
 	return (state>>(N-1))	
 
-def mask(bits):
-	return (1 << bits) - 1
 
 def sadd(state):
 	global N
@@ -84,20 +88,24 @@ def sim_trace(trace):
 	
 	
 	ghr=0 #global history register
+	lhr=dict()
+	for i in range(1<<4):
+		lhr[i] = 0
+		
 	mispred_count = 0
 	iter = 0
 	for branch in trace:
 		real = branch[1]
 		addr = addrIndex(branch[0])
 		
+		#tab=lhr[addr & HR_MASK]
+		#state = table[tab][addr]
 		state = table[ghr][addr]
 		pred = decode(state)#100 - > 1 , 011 -> 0, 10 -> 1
 		
 		mispred = (pred!=real)
 		#print hex(branch[0]), branch[1], ghr,addr, pred,
 		#print "Misprediction:",mispred
-		
-		
 		#print "r:",real,"p:",pred,"g:",ghr,"i:",iter/3
 
 		if mispred:
@@ -108,19 +116,12 @@ def sim_trace(trace):
 		else:
 			table[ghr][addr] = sadd(state)
 		
-		
-		
-		#print table[ghr][addr]
-		
-		#{CHECK IF SHIFT IS CORRECT}
 		ghr = ((ghr << 1) | (real)) & M_MASK # shift the real outcome in and keep the M newest branch outcomes
-		
+		#lhr[addr & HR_MASK] = ((tab << 1) | (real)) & M_MASK
 		
 		
 		iter = iter + 1
-		#if iter >100:
-		#	break;
-	print "iter:",iter
+	print "branch count:",iter
 	print "mispred_count:",mispred_count
 	print "percentage:",float(mispred_count)/iter
 
