@@ -94,12 +94,16 @@ def sim_trace(trace):
 		
 	mispred_count = 0
 	iter = 0
+	util = dict()
 	for branch in trace:
 		real = branch[1]
 		addr = addrIndex(branch[0])
 		
 		#tab=lhr[addr & HR_MASK]
 		#state = table[tab][addr]
+		gaddr = ghr << (ADDR_BITS) | addr
+		#print hex(ghr), hex(addr), hex(gaddr)
+		util[ gaddr ] = 1
 		state = table[ghr][addr]
 		pred = decode(state)#100 - > 1 , 011 -> 0, 10 -> 1
 		
@@ -121,9 +125,12 @@ def sim_trace(trace):
 		
 		
 		iter = iter + 1
-	print "branch count:",iter
-	print "mispred_count:",mispred_count
-	print "percentage:",float(mispred_count)/iter
+	print "branch count: ",iter
+	print "misprediction count: ",mispred_count
+	print "misprediction percentage: ",(float(mispred_count)/iter)*100
+	print "predictor entries utilized: ", len(util)
+	print "total predictor entries: ",(tables * entries)
+	print "entry percentage utilization: ",(float(len(util))/(tables * entries))*100
 
 #################################
 #								#
@@ -150,13 +157,9 @@ print "Simulating branch predictor on stack trace <",filename,"> using a (",Marg
 trace = processTraceFile(filename)
 
 
-print "M bits:",M
-print "M mask:",hex(M_MASK)
-print "N bits:",N
-print "N mask:",hex(N_MASK)
-
-print "PC address bits:",ADDR_BITS
-print "PC address mask:",hex(ADDR_MASK)
+print "M bit count and mask:",M,",",hex(M_MASK)
+print "N bit count and mask:",N,",",hex(N_MASK)
+print "PC address bit count and mask:",ADDR_BITS,",",hex(ADDR_MASK)
 
 
 sim_trace(trace)
