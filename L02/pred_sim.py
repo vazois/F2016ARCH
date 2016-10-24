@@ -86,12 +86,11 @@ def sim_trace(trace):
 
 	#print table
 	
-	
 	ghr=0 #global history register
-	lhr=dict()
-	for i in range(1<<4):
-		lhr[i] = 0
-		
+	#lhr=dict()
+	#for i in range(1<<4):
+	#	lhr[i] = 0
+	
 	mispred_count = 0
 	iter = 0
 	util = dict()
@@ -139,12 +138,9 @@ def sim_trace(trace):
 #################################
 
 argc = len(sys.argv)
-
 if argc < 5:
 	print "Please provide filename, (M,N) predictor parameters and LSB to consider from PC: e.g. ./pred_sim.py trace.txt 0 1"
 	exit(1)
-
-
 
 filename = sys.argv[1]
 Marg = int(sys.argv[2])
@@ -163,10 +159,5 @@ print "PC address bit count and mask:",ADDR_BITS,",",hex(ADDR_MASK)
 
 
 sim_trace(trace)
-
-
-#for i in range(10):
-#	pair = trace[i]
-#	print hex(pair[0]),pair[1]
 
 
