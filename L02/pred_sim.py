@@ -22,15 +22,27 @@ HR_MASK = mask(HR_BITS)
 
 def decode(state):
 	global N
-	return (state>>(N-1))	
-
+	return (state>>(N-1))
+	
+def ffs(x):
+	shf = (x&-x).bit_length()-1
+	return shf if shf > 0 else 0 
+	
 def sadd(state):
-	global N
-	return state + 1 if state < mask(N) else state
+	global N_MASK
+	shf = ffs(~state)
+	#print "ffs_add:",shf
+	return   ((1 << shf) | state ) & N_MASK
+	#global N
+	#return state + 1 if state < mask(N) else state
 
 def ssub(state):
-	global N
-	return state - 1 if state > 0 else state
+	global N_MASK
+	shf = ffs(state)
+	#print "ffs_sub:",(~(1 << shf))
+	return   ((~(1 << shf)) & state ) & N_MASK
+	#global N
+	#return state - 1 if state > 0 else state
 
 def setMNBits(Marg,Narg):
 	global M,N
@@ -99,7 +111,7 @@ def sim_trace(trace):
 		mispred = (pred!=real)
 		#print hex(branch[0]), branch[1], ghr,addr, pred,
 		#print "Misprediction:",mispred
-		#if addr==24:
+		#if addr==24 and ghr == 7:
 		#	print "addr:",addr,"r:",real,"p:",pred,"g:",ghr,"i:",iter/3
 
 		if mispred:
@@ -109,6 +121,9 @@ def sim_trace(trace):
 			table[ghr][addr] = ssub(state)
 		else:
 			table[ghr][addr] = sadd(state)
+		
+		#table[ghr][addr] = ((state << 1) | real) & N_MASK	
+			
 		
 		ghr = ((ghr << 1) | (real)) & M_MASK # shift the real outcome in and keep the M newest branch outcomes		
 		
@@ -131,10 +146,17 @@ if argc < 5:
 	print "Please provide filename, (M,N) predictor parameters and LSB to consider from PC: e.g. ./pred_sim.py trace.txt 0 1"
 	exit(1)
 
+
 filename = sys.argv[1]
 Marg = int(sys.argv[2])
 Narg = int(sys.argv[3])
 Barg = int(sys.argv[4])
+
+#print "tkn:",ffs(~Marg)
+#print "nottkn:",ffs(Marg)
+#print "taken:",sadd(Marg)
+#print "not taken:", ssub(Marg)
+
 
 setMNBits(Marg,Narg)
 setAddrBits(Barg);
@@ -145,6 +167,8 @@ trace = processTraceFile(filename)
 print "M bit count and mask:",M,",",hex(M_MASK)
 print "N bit count and mask:",N,",",hex(N_MASK)
 print "PC address bit count and mask:",ADDR_BITS,",",hex(ADDR_MASK)
+
+#exit(1)
 
 
 sim_trace(trace)
