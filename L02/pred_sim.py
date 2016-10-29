@@ -1,4 +1,6 @@
 import sys
+import os.path
+
 
 #################################
 #								#
@@ -90,6 +92,7 @@ def sim_trace(trace):
 	
 	print "Number of History Tables: ",tables
 	print "Entries per Table: ",entries
+	print "Total predictor entries: ",(tables * entries)
 	
 	table=dict()
 	for i in range(tables):
@@ -128,12 +131,11 @@ def sim_trace(trace):
 		ghr = ((ghr << 1) | (real)) & M_MASK # shift the real outcome in and keep the M newest branch outcomes		
 		
 		iter = iter + 1
-	print "branch count: ",iter
-	print "misprediction count: ",mispred_count
-	print "misprediction percentage: ",(float(mispred_count)/iter)*100
-	print "predictor entries utilized: ", len(util)
-	print "total predictor entries: ",(tables * entries)
-	print "entry percentage utilization: ",(float(len(util))/(tables * entries))*100
+	print "Branch count: ",iter
+	print "Misprediction count: ",mispred_count
+	print "Misprediction percentage: ",(float(mispred_count)/iter)*100
+	print "Predictor entries utilized: ", len(util)
+	print "Entry percentage utilization: ",(float(len(util))/(tables * entries))*100
 
 #################################
 #								#
@@ -146,16 +148,27 @@ if argc < 5:
 	print "Please provide filename, (M,N) predictor parameters and LSB to consider from PC: e.g. ./pred_sim.py trace.txt 0 1"
 	exit(1)
 
-
 filename = sys.argv[1]
 Marg = int(sys.argv[2])
 Narg = int(sys.argv[3])
 Barg = int(sys.argv[4])
 
-#print "tkn:",ffs(~Marg)
-#print "nottkn:",ffs(Marg)
-#print "taken:",sadd(Marg)
-#print "not taken:", ssub(Marg)
+if not os.path.isfile(filename):
+	print "File ", filename, " does not exist"
+	exit(1)
+
+if (Marg < 0 or Marg >= 16):
+	print "Number of bits in the BHR should >= 0 and < 16"
+	exit(1)
+	
+if (Narg < 1):
+	print "Number of bits for the counter in the entries of the BHT should be >= 1"
+	exit(1)
+
+if (Barg < 1 or Barg > 16):
+	print "Number of bits used for indexing from the PC address should be >=1 and <= 16"
+	exit(1)
+
 
 
 setMNBits(Marg,Narg)
@@ -170,7 +183,4 @@ print "PC address bit count and mask:",ADDR_BITS,",",hex(ADDR_MASK)
 
 #exit(1)
 
-
 sim_trace(trace)
-
-
