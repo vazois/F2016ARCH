@@ -115,7 +115,17 @@ def processTraceFile(file):
 def updateCounters(set):
     for block in set:
         set[block] = sadd(set[block])
-
+        
+def findLRU(set):
+    LRUtag=0
+    maxCount = 0
+    for tag in set:
+        if maxCount <= set[tag]:
+            LRUtag = tag
+    
+    return LRUtag
+    
+    
 def sim_LRU_cache(trace):
     global CSIZE, BSIZE, WAYS, SETS, filename
     global OFFSET_BITS, INDEX_BITS, TAG_BITS
@@ -139,18 +149,15 @@ def sim_LRU_cache(trace):
     memreq = len(trace)
     iter = 0
     for req in trace:
-        #print req
         addr = req[2]
-        
         offset = extract(addr,OFFSET_MASK,0)
         index = extract(addr,INDEX_MASK,OFFSET_BITS)
         tag = extract(addr,TAG_MASK,INDEX_BITS+OFFSET_BITS)
         
         #print "a:",hex(addr),"t:",tag,"i:",hex(index),"o:",hex(offset),
-        #print "t:",hex(tag),"i:",hex(index),"o:",hex(offset),
+        #print "t:",hex(tag),"i:",hex(index),"o:",hex(offset)
         #print "t:",tag,"i:",index,"o:",offset,
         
-        #print cache[index],
         set = cache[index]
         if tag not in set: # MISS IF tag not in set
             miss = miss + 1
@@ -159,19 +166,19 @@ def sim_LRU_cache(trace):
                 updateCounters(set)
                 set[tag] = 0
             else:#ELSE FIND BLOCK TO EVICT
-                #print "t:",tag,"i:",index,"o:",offset,
-                #print cache[index],
-                LRUtag = max(set,key=set.get)
                 #print "(miss)(evict)",LRUtag
+                LRUtag = max(set,key=set.get)
+                #LRUtag = findLRU(set)
                 set.pop(LRUtag)
                 updateCounters(set)
                 set[tag] = 0
         else:#IF TAG IN SET UPDATE COUNTERS
-            #print "(hit)"
             updateCounters(set)
             set[tag] = 0
         
         #raw_input("Press Enter to continue...")
+        #if iter % 100000 == 0:
+        #    print iter
         iter = iter + 1
         #if iter > 10:
         #    break
@@ -181,8 +188,8 @@ def sim_LRU_cache(trace):
     print "Misses: ", miss
     print "Memory Requests: ",memreq
     print "Miss Percentage: ",(float(miss)/memreq)*100,"%"
-    
-     
+    #print "Locality of Reference: ", max(pattern,key=pattern.get)
+    #print pattern
 
 
 argParser(sys)
