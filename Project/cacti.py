@@ -4,23 +4,41 @@ import subprocess
 import os.path
 
 BANKS=4
-TECH = 0.32
+TECH = 0.032
 
-CT = 0
+ACCESS_TIME = 0
+RANDOM_CYCLE = 0
 POWER=0
 AREA=0
+MEM_MUL = 50
+MEM_LATENCY = 0
 
-def cacti_call(CSIZE,BSIZE,WAYS):
-    CACTI = "./cacti41/cacti"
+CACTI_FLD = "cacti53/"
+CACTI = "./cacti53/cacti"
+
+def getFLD():
+    global CACTI_FLD
+    return CACTI_FLD
+
+def getExec():
+    global CACTI
+    return CACTI
+
+def compile():
+    if os.path.isfile(CACTI):
+        return
+    
+    print "Compiling cacti..."
+    make = subprocess.Popen(["make", "-C", CACTI_FLD], stdout=subprocess.PIPE)
+    make.wait()
+    
     if not os.path.isfile(CACTI):
-        print "File ", CACTI, " does not exist. Please type make in cacti41 folder."
+        print "Compilation failed! Please check errors by manualy typing make in ",CACTI_FLD
         exit(1)
 
-    #call([CACTI, str(CSIZE), str(BSIZE), str(WAYS), str(TECH), str(BANKS)])
-    proc = subprocess.Popen([CACTI, str(CSIZE), str(BSIZE), str(WAYS), str(TECH), str(BANKS)], stdout=subprocess.PIPE)
-    for line in iter(proc.stdout.readline,''):
-        print line.rstrip()
+def clean():
+    print "Cleaning cacti compilation..."
+    make = subprocess.Popen(["make","clean", "-C", CACTI_FLD], stdout=subprocess.PIPE)
+    make.wait()
+    
 
-def modelCache():
-    #Process cache features
-    x=0
