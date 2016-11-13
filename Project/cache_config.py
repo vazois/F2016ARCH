@@ -8,6 +8,36 @@ CACHE_ARG_LIST = list()
 CACTI_FLD = getFLD()
 CACTI = getExec()
 
+names_cache=dict()
+values_cache=dict()
+
+names_cache["Capacity (bytes)"] = "C"
+names_cache["Banks"] = "BNKS"
+names_cache["Line size (bytes)"] ="B"
+names_cache["Associativity"] = "A"
+names_cache["Data width"] = "DW"
+names_cache["Access time (ns)"] = "AT"
+names_cache["Random cycle time (ns)"] = "RT"
+
+names_cache["Dynamic read power (mW)"] = "RPWR"
+names_cache["Stanby leakage per bank(mW)"] = "LBPWR"
+
+names_cache["Area (mm2)"] = "AR"
+
+
+def get_cache_cfg(name):
+    global values_cache
+    return values_cache[name]
+
+def read_cache_mdl(f,v):
+    global names_cache, values_cache
+    for i in range(len(f)):
+        if f[i].strip() in names_cache:
+            #print f[i],"=",v[i]
+            values_cache[names_cache[f[i].strip()]] = float(v[i])
+    
+    #print values
+
 def model_cache(cfg):
     print "Modeling Cache..."
     
@@ -32,12 +62,13 @@ def model_cache(cfg):
 
     fp = open(cfg[-1],'r')
     lines = fp.readlines()
-    flags = lines[0].strip().split(",")
-    values = lines[1].strip().split(",")
+    f = lines[0].strip().split(",")
+    v = lines[1].strip().split(",")
     
+    #for i in range(len(f)):
+    #    print f[i],"=",v[i]
     
-    #for i in range(len(flags)):
-    #    print flags[i],"=",values[i]
+    read_cache_mdl(f,v)
     
     fp.close()
 
@@ -65,7 +96,7 @@ def parse_cache_cfg():
     
     fp.close()
 
-def get_cache_cfg():
+def get_cache_args():
     global CACHE_ARG_LIST
     return CACHE_ARG_LIST
     

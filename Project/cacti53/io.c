@@ -333,11 +333,12 @@ void output_data_csv(const final_results & fin_res,const char *filename)
   {
     //if (print_index == true)
     //{
-      file << "Tech node (nm), ";
+      file << " Lithography, ";
       file << "Capacity (bytes), ";
-      file << "Number of banks, ";
+      file << "Banks, ";
+      file << "Line size (bytes), ";
       file << "Associativity, ";
-      file << "Output width (bits), ";
+      file << "Data width, ";
       file << "Access time (ns), ";
       file << "Random cycle time (ns), ";
       file << "Multisubbank interleave cycle time (ns), ";
@@ -398,6 +399,7 @@ void output_data_csv(const final_results & fin_res,const char *filename)
     file << g_ip.F_sz_nm << ", ";
     file << g_ip.cache_sz << ", ";
     file << g_ip.nbanks << ", ";
+    file << g_ip.line_sz <<", ";
     file << g_ip.tag_assoc << ", ";
     file << g_ip.out_w << ", ";
     file << fin_res.access_time*1e+9 << ", ";

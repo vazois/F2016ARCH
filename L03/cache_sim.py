@@ -34,12 +34,8 @@ def info():
     print "Simulating ",WAYS,"- way associative cache with block size ", BSIZE, " bytes and data size ", CSIZE, " bytes on trace <", filename ,">"
     print "Additional space for tag in bytes: ",int(TCSIZE)
     print "# of Sets: ", SETS
-    print "OFFSET_BITS: ", OFFSET_BITS
-    print "INDEX_BITS: ", INDEX_BITS
-    print "TAG_BITS: ", TAG_BITS
-    print "OFFSET_MASK: ", hex(OFFSET_MASK)
-    print "INDEX_MASK: ", hex(INDEX_MASK)
-    print "TAG_MASK: ", hex(TAG_MASK)
+    print "(TAG_BITS,INDEX_BITS,OFFSET_BITS): (", TAG_BITS,",",INDEX_BITS,",",OFFSET_BITS,")"
+    print "(TAG_MASK,INDEX_MASK,OFFSET_MASK): (",hex(TAG_MASK),",",hex(INDEX_MASK),",",hex(OFFSET_MASK),")"
     
 def initConfig():
     global CSIZE, BSIZE, WAYS, SETS,TCSIZE, filename

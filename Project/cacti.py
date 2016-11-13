@@ -3,16 +3,6 @@ import math
 import subprocess
 import os.path
 
-BANKS=4
-TECH = 0.032
-
-ACCESS_TIME = 0
-RANDOM_CYCLE = 0
-POWER=0
-AREA=0
-MEM_MUL = 50
-MEM_LATENCY = 0
-
 CACTI_FLD = "cacti53/"
 CACTI = "./cacti53/cacti"
 
