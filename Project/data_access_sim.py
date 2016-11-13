@@ -1,4 +1,7 @@
 import math
+import os.path
+
+from cache_policy_sim import policy_LRU, policy_RANDOM
 
 C = 0
 B = 0
@@ -115,14 +118,15 @@ def print_cache_cfg():
     print "Cache Random cycle time :",RT,"(ns)"
     #print "__________________________________"
     #print "<<<<<<<<<<<<<<<<->>>>>>>>>>>>>>>>>"
-    
+
+ACTIVE_POLICY = "LRU"
 LRU = "LRU"
 RANDOM = "RANDOM"    
 
-ACTIVE_POLICY = "LRU"
-
 def set_policy(policy):
-    global LRU
+    global LRU,RANDOM
+    global ACTIVE_POLICY
+    
     if policy == LRU:
         ACTIVE_POLICY = policy
     elif policy == RANDOM:
@@ -130,6 +134,38 @@ def set_policy(policy):
     else:
         print "Chosen policy (",policy,") not supported!!!"
         exit(1)
+
+
+def parse_trace(filename):
+    
+    if not os.path.isfile(filename):
+        print "ERROR: trace file (",filename,") does not exist!!!"
+        exit(1)
+    
+    fp = open(filename,'r')
+    trace=list()
+    
+    
+    fp.close()
+    return trace
+        
+def simulate_trace(filename):
+    global LRU,RANDOM
+    global ACTIVE_POLICY
+    
+    
+    trace = parse_trace(filename)
+    
+    if ACTIVE_POLICY == LRU:
+        policy_LRU()
+    elif ACTIVE_POLICY == RANDOM:
+        policy_RANDOM()
+        
+
+
+
+
+    
     
     
     
