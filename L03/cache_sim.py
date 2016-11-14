@@ -7,8 +7,8 @@ def mask(bits):
     return (1 << bits) - 1
 
 CSIZE = 64*1024#64*1024 Bytes Data Size
-BSIZE = 16# 32 Bytes Block Size
-WAYS = 8 # Associativity
+BSIZE = 32# 32 Bytes Block Size
+WAYS = 2 # Associativity
 SETS = CSIZE/(WAYS*BSIZE)
 TCSIZE = 0
 filename = ""
@@ -84,7 +84,7 @@ def argParser(sys):
         CSIZE = int(arg)
     
     BSIZE = int(sys.argv[3])
-    if sys.argv[4] == 'N':
+    if int(sys.argv[4]) == 0:
         WAYS = int(CSIZE/BSIZE)
     else:
         WAYS = int(sys.argv[4])

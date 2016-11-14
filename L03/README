@@ -1,0 +1,14 @@
+The simulator is designed using Python 2.7.6. It takes as input up to 4 arguments but it can function with at least one.
+The mandatory argument is the trace-filename. If the use provides only that the simulator run on default-configuration for the cache
+which are 64K cache, 32B line, 2-way associative.
+
+So there are two modes of execution which are shown in the following examples
+
+python cache_sim.py gcc-10K.memtrace //default cache configuration
+
+python cache_sim.py gcc-10K.memtrace 256K 32 2 // custom cache configuration (256K capacity, 32 line size, 2 way associative)
+
+For the custom cache configuration, the first input is the size of the cache(K and M to distinguish between KB and MB, no letter assumed Bytes),
+the line size in bytes, the associativity.
+If you want to have fully associative cache may put 0 in the associativity argument.
+
