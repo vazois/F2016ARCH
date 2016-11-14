@@ -10,5 +10,5 @@ python cache_sim.py gcc-10K.memtrace 256K 32 2 // custom cache configuration (25
 
 For the custom cache configuration, the first input is the size of the cache(K and M to distinguish between KB and MB, no letter assumed Bytes),
 the line size in bytes, the associativity.
-If you want to have fully associative cache may put 0 in the associativity argument.
+If you want to have fully associative cache set to 0 the associativity argument.
 
