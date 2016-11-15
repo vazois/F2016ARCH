@@ -1,7 +1,7 @@
 import math
 import os.path
 
-from cache_policy_sim import policy_LRU, policy_RANDOM
+from cache_policy_sim import set_cfg, policy_LRU, policy_RANDOM
 
 C = 0
 B = 0
@@ -16,7 +16,7 @@ TAG_MASK = 0
 
 OFFSET_BITS = 0
 INDEX_BITS = 0
-TAG_MASK = 0
+TAG_BITS = 0
 
 OFFSET = "OFFSET"
 INDEX = "INDEX"
@@ -32,16 +32,6 @@ def sadd(v):
     global A
     return v if v == (A - 1) else v + 1 
 
-def extract(val,flag):
-    global OFFSET_BITS, INDEX_BITS, TAG_BITS
-    global OFFSET_MASK, INDEX_MASK, TAG_MASK
-    
-    if flag == "OFFSET":
-        return (val & OFFSET_MASK) >> 0
-    elif flag == "INDEX":
-        return (val & INDEX_MASK) >> OFFSET_BITS
-    elif flag == "TAG":
-        return (val & TAG_MASK) >> (OFFSET_BITS + INDEX_BITS)
 
 def set_cache_cfg_no_time(CSIZE,BSIZE,ASSOC):
     set_cache_cfg(CSIZE,BSIZE,ASSOC,1,1)
@@ -66,8 +56,8 @@ def set_cache_cfg(CSIZE,BSIZE,ASSOC,ATIME,RTIME):
     TAG_BITS = ADDR_WIDTH - INDEX_BITS - OFFSET_BITS
     
     OFFSET_MASK = mask(OFFSET_BITS)
-    INDEX_MASK = mask(INDEX_BITS)
-    TAG_MASK = mask(TAG_BITS)
+    INDEX_MASK = mask(INDEX_BITS) << OFFSET_BITS
+    TAG_MASK = mask(TAG_BITS) << (OFFSET_BITS + INDEX_BITS)
     
 C_RAM = 0
 B_RAM = 0
@@ -121,7 +111,7 @@ def print_cache_cfg():
 
 ACTIVE_POLICY = "LRU"
 LRU = "LRU"
-RANDOM = "RANDOM"    
+RANDOM = "RR"    
 
 def set_policy(policy):
     global LRU,RANDOM
@@ -133,11 +123,12 @@ def set_policy(policy):
         ACTIVE_POLICY = policy
     else:
         print "Chosen policy (",policy,") not supported!!!"
+        print "Type LRU = Least Recently Used, RR = Random Replacement"
         exit(1)
 
 
 def parse_trace(filename):
-    
+    global ADDR_WIDTH
     if not os.path.isfile(filename):
         print "ERROR: trace file (",filename,") does not exist!!!"
         exit(1)
@@ -145,7 +136,15 @@ def parse_trace(filename):
     fp = open(filename,'r')
     trace=list()
     
+    lines = fp.readlines()
     
+    ADDR_MASK = mask(ADDR_WIDTH)
+    for line in lines:
+        data = line.strip().split(" ")
+        addr = int(data[2],16) & ADDR_MASK
+        trace.append(addr)
+        #print hex(addr)
+        #break
     fp.close()
     return trace
         
@@ -153,13 +152,18 @@ def simulate_trace(filename):
     global LRU,RANDOM
     global ACTIVE_POLICY
     
+    global OFFSET_BITS, INDEX_BITS, TAG_BITS
+    global OFFSET_MASK, INDEX_MASK, TAG_MASK
+    global A,SETS
+    
     
     trace = parse_trace(filename)
+    set_cfg(OFFSET_BITS, INDEX_BITS, TAG_BITS, OFFSET_MASK, INDEX_MASK, TAG_MASK, A, SETS)
     
     if ACTIVE_POLICY == LRU:
-        policy_LRU()
+        policy_LRU(trace)
     elif ACTIVE_POLICY == RANDOM:
-        policy_RANDOM()
+        policy_RANDOM(trace)
         
 
 

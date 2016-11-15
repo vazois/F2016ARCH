@@ -114,10 +114,11 @@ def updateCounters(set):
         
 def findLRU(set):
     LRUtag=0
-    maxCount = 0
+    max = 0
     for tag in set:
-        if maxCount <= set[tag]:
+        if set[tag] > max:
             LRUtag = tag
+            max = set[tag]
     
     return LRUtag
     
@@ -131,8 +132,10 @@ def sim_LRU_cache(trace):
     
     #Init Virtual Cache
     cache = dict()
+    LRU_item = dict()
     for i in range(SETS):
         cache[i] = dict()
+        LRU_item[i] = dict()
         #for j in range(WAYS):
         #    cache[i][j] = (0,0,0)#(tag,valid,counter)
         #    cache[i][j] = (0,0)#(tag,counter)
@@ -150,7 +153,7 @@ def sim_LRU_cache(trace):
         index = extract(addr,INDEX_MASK,OFFSET_BITS)
         tag = extract(addr,TAG_MASK,INDEX_BITS+OFFSET_BITS)
         
-        #print "a:",hex(addr),"t:",tag,"i:",hex(index),"o:",hex(offset),
+        print "a:",hex(addr),"t:",tag,"i:",hex(index),"o:",hex(offset)
         #print "t:",hex(tag),"i:",hex(index),"o:",hex(offset)
         #print "t:",tag,"i:",index,"o:",offset,
         
@@ -177,7 +180,7 @@ def sim_LRU_cache(trace):
         #    print iter
         iter = iter + 1
         #if iter > 10:
-        #    break
+        break
         
     print "Simulation finished, gathering statistics..."
     
