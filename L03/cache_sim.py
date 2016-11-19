@@ -2,6 +2,8 @@ import sys
 import os.path
 import math
 
+import threading
+
 
 def mask(bits):
     return (1 << bits) - 1
@@ -109,19 +111,14 @@ def processTraceFile(file):
     return trace
 
 def updateCounters(set):
-    for block in set:
-        set[block] = sadd(set[block])
-        
-def findLRU(set):
-    LRUtag=0
-    max = 0
+    #LRUtag=0
+    #max = 0
     for tag in set:
-        if set[tag] > max:
-            LRUtag = tag
-            max = set[tag]
-    
-    return LRUtag
-    
+        #if set[tag] > max:
+        #    LRUtag = tag
+        #    max = set[tag]
+        set[tag] = sadd(set[tag])
+    #return LRUtag
     
 def sim_LRU_cache(trace):
     global CSIZE, BSIZE, WAYS, SETS, filename
@@ -132,14 +129,8 @@ def sim_LRU_cache(trace):
     
     #Init Virtual Cache
     cache = dict()
-    LRU_item = dict()
     for i in range(SETS):
         cache[i] = dict()
-        LRU_item[i] = dict()
-        #for j in range(WAYS):
-        #    cache[i][j] = (0,0,0)#(tag,valid,counter)
-        #    cache[i][j] = (0,0)#(tag,counter)
-        #    cache[i][j] = 0#(counter)
     
     
     #print cache
@@ -147,13 +138,14 @@ def sim_LRU_cache(trace):
     miss = 0
     memreq = len(trace)
     iter = 0
+    
     for req in trace:
         addr = req[2]
         offset = extract(addr,OFFSET_MASK,0)
         index = extract(addr,INDEX_MASK,OFFSET_BITS)
         tag = extract(addr,TAG_MASK,INDEX_BITS+OFFSET_BITS)
         
-        print "a:",hex(addr),"t:",tag,"i:",hex(index),"o:",hex(offset)
+        #print "a:",hex(addr),"t:",tag,"i:",hex(index),"o:",hex(offset)
         #print "t:",hex(tag),"i:",hex(index),"o:",hex(offset)
         #print "t:",tag,"i:",index,"o:",offset,
         
@@ -167,30 +159,31 @@ def sim_LRU_cache(trace):
             else:#ELSE FIND BLOCK TO EVICT
                 #print "(miss)(evict)",LRUtag
                 LRUtag = max(set,key=set.get)
-                #LRUtag = findLRU(set)
                 set.pop(LRUtag)
                 updateCounters(set)
                 set[tag] = 0
+                
+                #LRUtag = updateCounters(set)
+                #set[tag] = 0
+                
+                
         else:#IF TAG IN SET UPDATE COUNTERS
             updateCounters(set)
             set[tag] = 0
         
-        #raw_input("Press Enter to continue...")
-        #if iter % 100000 == 0:
-        #    print iter
         iter = iter + 1
-        #if iter > 10:
-        break
+        #if iter % 100000 == 0:
+        #    print "Processed trace requests:",iter
         
     print "Simulation finished, gathering statistics..."
     
     print "Misses: ", miss
+    print "Hits: ", (memreq - miss)
     print "Memory Requests: ",memreq
     print "Miss Percentage: ",(float(miss)/memreq)*100,"%"
-    #print "Locality of Reference: ", max(pattern,key=pattern.get)
-    #print pattern
+    print "Hit Percentage: ",(float(memreq-miss)/memreq)*100,"%"
 
-
+    
 argParser(sys)
 info()
 trace = processTraceFile(filename)
