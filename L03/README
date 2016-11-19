@@ -13,5 +13,9 @@ the line size in bytes, the associativity.
 If you want to have fully associative cache set to 0 the associativity argument.
 
 Note:
-For the large trace, the fully associative cache takes a long time to simulate.
+1) For the large trace, the fully associative cache takes a long time to simulate.
+2) There are two LRU implementations. Change the listLRU variable in cache_sim.py to switch between implementations.
+With listLRU = True the simulation is faster. The miss rate might change but the difference in percent is not that
+significant. Look at the report for more details.
+
 

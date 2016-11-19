@@ -4,6 +4,7 @@ import math
 
 import threading
 
+listLRU=False
 
 def mask(bits):
     return (1 << bits) - 1
@@ -119,25 +120,28 @@ def updateCounters(set):
         #    max = set[tag]
         set[tag] = sadd(set[tag])
     #return LRUtag
-    
-def sim_LRU_cache(trace):
+
+def find(lset,tag):
+    for i in range(len(lset)):
+        if lset[i] == tag:
+            return i
+    return -1
+  
+def sim_LRU_counters(trace):
     global CSIZE, BSIZE, WAYS, SETS, filename
     global OFFSET_BITS, INDEX_BITS, TAG_BITS
     global OFFSET_MASK, INDEX_MASK, TAG_MASK
     
-    print "Simulating cache access using LRU replacement policy...."
+    print "Simulating cache access using counters LRU replacement policy...."
     
     #Init Virtual Cache
     cache = dict()
     for i in range(SETS):
         cache[i] = dict()
     
-    #print cache
-    #Simulate
     miss = 0
     memreq = len(trace)
     iter = 0
-    
     for req in trace:
         addr = req[2]
         offset = extract(addr,OFFSET_MASK,0)
@@ -162,29 +166,75 @@ def sim_LRU_cache(trace):
                 updateCounters(set)
                 set[tag] = 0
                 
-                #LRUtag = updateCounters(set)
-                #set[tag] = 0
-                
-                
         else:#IF TAG IN SET UPDATE COUNTERS
             updateCounters(set)
             set[tag] = 0
-        
-        iter = iter + 1
-        #if iter % 100000 == 0:
-        #    print "Processed trace requests:",iter
-        
+                
     print "Simulation finished, gathering statistics..."
-    
     print "Misses: ", miss
     print "Hits: ", (memreq - miss)
     print "Memory Requests: ",memreq
     print "Miss Percentage: ",(float(miss)/memreq)*100,"%"
     print "Hit Percentage: ",(float(memreq-miss)/memreq)*100,"%"
 
+
+def sim_LRU_list(trace):
+    global CSIZE, BSIZE, WAYS, SETS, filename
+    global OFFSET_BITS, INDEX_BITS, TAG_BITS
+    global OFFSET_MASK, INDEX_MASK, TAG_MASK
+    
+    print "Simulating cache access using list LRU replacement policy...."
+    
+    #Init Virtual Cache
+    cache = dict()
+    lru = dict()
+    for i in range(SETS):
+        cache[i] = dict()
+        lru[i] = list()
+    
+    miss = 0
+    memreq = len(trace)
+    iter = 0
+    
+    for req in trace:
+        addr = req[2]
+        offset = extract(addr,OFFSET_MASK,0)
+        index = extract(addr,INDEX_MASK,OFFSET_BITS)
+        tag = extract(addr,TAG_MASK,INDEX_BITS+OFFSET_BITS)
+        
+        set = cache[index]
+        lset = lru[index]
+        if tag not in set:
+            miss = miss + 1
+            if len(set) < WAYS:
+                lset.insert(0,tag)
+                set[tag]=0
+            else:
+                LRUtag = lset[-1]
+                del lset[-1]
+                set.pop(LRUtag)
+                lset.insert(0,tag)
+                set[tag]=0
+                
+        else:
+            pos = find(lset,tag)
+            del lset[pos]
+            lset.insert(0,tag)
+            set[tag]=0
+    
+    print "Simulation finished, gathering statistics..."
+    print "Misses: ", miss
+    print "Hits: ", (memreq - miss)
+    print "Memory Requests: ",memreq
+    print "Miss Percentage: ",(float(miss)/memreq)*100,"%"
+    print "Hit Percentage: ",(float(memreq-miss)/memreq)*100,"%"
     
 argParser(sys)
 info()
 trace = processTraceFile(filename)
-sim_LRU_cache(trace)
+#sim_LRU_cache(trace)
+if(listLRU):
+    sim_LRU_list(trace)
+else:
+    sim_LRU_counters(trace)
 
