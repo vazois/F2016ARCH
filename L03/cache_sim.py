@@ -132,7 +132,6 @@ def sim_LRU_cache(trace):
     for i in range(SETS):
         cache[i] = dict()
     
-    
     #print cache
     #Simulate
     miss = 0

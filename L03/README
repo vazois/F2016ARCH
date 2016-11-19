@@ -12,3 +12,6 @@ For the custom cache configuration, the first input is the size of the cache(K a
 the line size in bytes, the associativity.
 If you want to have fully associative cache set to 0 the associativity argument.
 
+Note:
+For the large trace, the fully associative cache takes a long time to simulate.
+
