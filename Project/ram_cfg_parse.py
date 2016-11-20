@@ -1,6 +1,7 @@
 import os.path
 import subprocess
 from cacti import getFLD, getExec
+import definitions as df
 
 RAM_CFG_FILE = "ram.cfg"
 RAM_ARG_LIST = list()
@@ -28,6 +29,15 @@ def get_ram_cfg(name):
     global values_ram
     return values_ram[name]
 
+def init_ram():
+    df.C_RAM = int(get_ram_cfg("C"))
+    df.B_RAM = int(get_ram_cfg("B"))
+    df.BNKS_RAM =int(get_ram_cfg("BNKS"))
+    df.DW_RAM = int(get_ram_cfg("DW"))
+    
+    df.AT_RAM = float(get_ram_cfg("AT"))
+    df.RT_RAM = float(get_ram_cfg("RT"))
+
 def read_ram_mdl(f,v):
     global names_ram, values_ram
     for i in range(len(f)):
@@ -35,9 +45,35 @@ def read_ram_mdl(f,v):
             #print f[i],"=",v[i]
             values_ram[names_ram[f[i].strip()]] = float(v[i])
 
-def model_ram(cfg):
+def parse_ram_cfg():
+    global RAM_ARG_LIST
+    if not os.path.isfile(RAM_CFG_FILE):
+        print "ERROR: ram.cfg file is missing!!!"
+        exit(1)
+        
+    fp = open(RAM_CFG_FILE,'r')
+    lines = fp.readlines()
+    for line in lines:
+        data = line.strip().split("=")
+        
+        if data[0].strip() is "C":
+            if data[1].find('M') > 0:
+                data[1] = str(1024 * 1024 * int(data[1].split('M')[0]))
+            elif data[1].find('G') > 0:
+                data[1] = str(1024 * 1024 * 1024 * int(data[1].split('G')[0]))
+            
+        #print data[0],data[1]
+        #break
+        RAM_ARG_LIST.append(data[1].strip())
+    
+    fp.close()
+
+def model_ram():
+    global RAM_ARG_LIST
+    parse_ram_cfg()
     print "Modeling RAM..."
     
+    cfg = RAM_ARG_LIST
     cfg.insert(0,CACTI)
     #print ' '.join(cfg)
     #try:
@@ -67,30 +103,3 @@ def model_ram(cfg):
     
     read_ram_mdl(f,v)
     fp.close()
-    
-def parse_ram_cfg():
-    global RAM_ARG_LIST
-    if not os.path.isfile(RAM_CFG_FILE):
-        print "ERROR: ram.cfg file is missing!!!"
-        exit(1)
-        
-    fp = open(RAM_CFG_FILE,'r')
-    lines = fp.readlines()
-    for line in lines:
-        data = line.strip().split("=")
-        
-        if data[0].strip() is "C":
-            if data[1].find('M') > 0:
-                data[1] = str(1024 * 1024 * int(data[1].split('M')[0]))
-            elif data[1].find('G') > 0:
-                data[1] = str(1024 * 1024 * 1024 * int(data[1].split('G')[0]))
-            
-        #print data[0],data[1]
-        #break
-        RAM_ARG_LIST.append(data[1].strip())
-    
-    fp.close()
-
-def get_ram_args():
-    global RAM_ARG_LIST
-    return RAM_ARG_LIST

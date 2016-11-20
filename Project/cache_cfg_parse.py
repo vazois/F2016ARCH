@@ -1,6 +1,7 @@
 import os.path
 import subprocess
 from cacti import getFLD, getExec
+import definitions as df
 
 CACHE_CFG_FILE = "cache.cfg"
 CACHE_ARG_LIST = list()
@@ -24,10 +25,16 @@ names_cache["Stanby leakage per bank(mW)"] = "LBPWR"
 
 names_cache["Area (mm2)"] = "AR"
 
-
 def get_cache_cfg(name):
     global values_cache
     return values_cache[name]
+
+def init_cache():
+    df.C = int(get_cache_cfg("C"))
+    df.B=int(get_cache_cfg("B"))
+    df.A=int(get_cache_cfg("A"))
+    df.AT_CACHE=float(get_cache_cfg("AT"))
+    df.RT_CACHE=float(get_cache_cfg("RT"))
 
 def read_cache_mdl(f,v):
     global names_cache, values_cache
@@ -38,9 +45,36 @@ def read_cache_mdl(f,v):
     
     #print values
 
-def model_cache(cfg):
+def parse_cache_cfg():
+    global CACHE_ARG_LIST
+    
+    if not os.path.isfile(CACHE_CFG_FILE):
+        print "ERROR: cache.cfg file is missing!!!"
+        exit(1)
+        
+    fp = open(CACHE_CFG_FILE,'r')
+    lines = fp.readlines()
+    for line in lines:
+        data = line.strip().split("=")
+        
+        if data[0].strip() is "C":
+            if data[1].find('K') > 0:
+                data[1] = str(1024 * int(data[1].split('K')[0]))
+            elif data[1].find('M') > 0:
+                data[1] = str(1024 * 1024 * int(data[1].split('M')[0]))
+            
+        #print data[0],data[1]
+        #break
+        CACHE_ARG_LIST.append(data[1].strip())
+    
+    fp.close()
+
+def model_cache():
+    global CACHE_ARG_LIST
+    parse_cache_cfg()
     print "Modeling Cache..."
     
+    cfg = CACHE_ARG_LIST
     cfg.insert(0,CACTI)
     #print ' '.join(cfg)
     #try:
@@ -69,34 +103,7 @@ def model_cache(cfg):
     #    print f[i],"=",v[i]
     
     read_cache_mdl(f,v)
-    
     fp.close()
 
-def parse_cache_cfg():
-    global CACHE_ARG_LIST
-    
-    if not os.path.isfile(CACHE_CFG_FILE):
-        print "ERROR: cache.cfg file is missing!!!"
-        exit(1)
-        
-    fp = open(CACHE_CFG_FILE,'r')
-    lines = fp.readlines()
-    for line in lines:
-        data = line.strip().split("=")
-        
-        if data[0].strip() is "C":
-            if data[1].find('K') > 0:
-                data[1] = str(1024 * int(data[1].split('K')[0]))
-            elif data[1].find('M') > 0:
-                data[1] = str(1024 * 1024 * int(data[1].split('M')[0]))
-            
-        #print data[0],data[1]
-        #break
-        CACHE_ARG_LIST.append(data[1].strip())
-    
-    fp.close()
 
-def get_cache_args():
-    global CACHE_ARG_LIST
-    return CACHE_ARG_LIST
     
