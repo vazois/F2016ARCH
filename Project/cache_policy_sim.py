@@ -114,4 +114,54 @@ def policy_RANDOM(trace):
     print "Misses: ", miss
     print "Memory Requests: ",memreq
     print "Miss Percentage: ",(float(miss)/memreq)*100,"%"
+   
+def insertAt(path):
+    pos = 0
+    step = df.A/2
+    index = step - 1
+    levels = int(math.log(df.A,2))
+
+    for i in range(levels):
+        bit = (path & (1<<index)) >> index
+        path = path ^ (1 << index)
+        
+        pos = bit * step + pos
+        step = step >> 1
+        index = (index + step) if bit == 1 else (index - step)
+        
+    return pos
+
+def policy_PLRU(trace):
+    cache = dict()
+    lru = list()
+    
+    for i in range(df.SETS):
+        cache[i] = [0 for i in range(df.A)]
+        lru[i] = 0
+    
+    miss = 0
+    memreq = len(trace)
+    iter = 0
+    
+    print "Simulating pseudo LRU replacement policy..."
+    for addr in trace:
+        offset = extract(addr,"OFFSET")
+        index = extract(addr,"INDEX")
+        tag = extract(addr,"TAG")
+        
+        set = cache[index]
+        path = plru[index]
+        
+        if tag not in set:
+            miss = miss + 1
+            pos = insertAt(path)
+            set[pos] = tag
+    
+    print "Gathering statistics..."
+    print "Misses: ", miss
+    print "Memory Requests: ",memreq
+    print "Miss Percentage: ",(float(miss)/memreq)*100,"%"        
+        
+            
+        
     

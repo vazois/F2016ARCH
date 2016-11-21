@@ -34,4 +34,44 @@ print_cache_cfg()
 print_ram_cfg()
 
 
+import definitions as df
+import math
+
+def toggle(v,b):
+    return v ^ (1 << b)
+
+def insertAt(path):
+    pos = 0
+    step = df.A/2
+    index = step - 1
+    levels = int(math.log(df.A,2))
+    #print levels
+    
+    #print "df.A:",df.A,"path:",path
+    for i in range(levels):
+        #print "step:",step,"pos:",pos,"bit:",bit,"index:",index
+        bit = (path & (1<<index)) >> index
+        path = path ^ (1 << index)#toggle(path,index)
+        #print "step:",step,"pos:",pos,"bit:",bit,"index:",index
+        
+        pos = bit * step + pos
+        step = step >> 1
+        index = (index + step) if bit == 1 else (index - step)
+        #index = index + bit*step - toggle(bit,0)*step
+        #print path,pos,bit,npos,step
+    #print "path:",path,"pos:",pos,#"pbin:",int("0",2)
+    
+    #6 5 4 3 2 1 0
+    #0001011  11 0
+    #0110011  51 4
+    #0111101  61 2
+    #1010101  85 1
+    #1011110  94 5
+    #1100110 102 3
+    #1101000 104 7
+    #0000000 0
+    
+path = int(sys.argv[3])
+insertAt(path)
+print path
 
