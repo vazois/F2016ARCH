@@ -1,7 +1,7 @@
 import math
 import os.path
 
-from cache_policy_sim import policy_LRU, policy_RANDOM
+from cache_policy_sim import policy_LRU, policy_RANDOM, policy_PLRU
 import definitions as df
 
 def mask(bits):
@@ -59,9 +59,14 @@ def set_policy(policy):
         df.ACTIVE_POLICY = policy
     elif policy == df.RANDOM:
         df.ACTIVE_POLICY = policy
+    elif policy == df.PLRU:
+        df.ACTIVE_POLICY = policy
     else:
         print "Chosen policy (",policy,") not supported!!!"
-        print "Type LRU = Least Recently Used, RR = Random Replacement"
+        print "Supported Replacement Policies..."
+        print "LRU = Least Recently Used"
+        print "RR = Random Replacement"
+        print "PLRU = Pseudo LRU"
         exit(1)
 
 
@@ -107,6 +112,8 @@ def simulate_trace(filename):
         policy_LRU(trace)
     elif df.ACTIVE_POLICY == df.RANDOM:
         policy_RANDOM(trace)
+    elif df.ACTIVE_POLICY == df.PLRU:
+        policy_PLRU(trace)
         
 
 

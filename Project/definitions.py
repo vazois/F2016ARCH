@@ -6,6 +6,7 @@
 ACTIVE_POLICY = "LRU"
 LRU = "LRU"
 RANDOM = "RR" 
+PLRU="PLRU"
 
 #Organization
 C = 0

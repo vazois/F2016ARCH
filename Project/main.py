@@ -71,7 +71,7 @@ def insertAt(path):
     #1101000 104 7
     #0000000 0
     
-path = int(sys.argv[3])
-insertAt(path)
-print path
+#path = int(sys.argv[3])
+#insertAt(path)
+#print path
 

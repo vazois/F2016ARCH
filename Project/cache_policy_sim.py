@@ -1,5 +1,6 @@
 import definitions as df
 import random
+import math
 
 def test_cache():
     print "Test Cache>>>>>>>>>>>>>>>>>>>>>"
@@ -133,11 +134,11 @@ def insertAt(path):
 
 def policy_PLRU(trace):
     cache = dict()
-    lru = list()
-    
+    lru=dict()
     for i in range(df.SETS):
-        cache[i] = [0 for i in range(df.A)]
+        cache[i] = [0 for j in range(df.A)]
         lru[i] = 0
+    
     
     miss = 0
     memreq = len(trace)
@@ -150,7 +151,7 @@ def policy_PLRU(trace):
         tag = extract(addr,"TAG")
         
         set = cache[index]
-        path = plru[index]
+        path = lru[index]
         
         if tag not in set:
             miss = miss + 1
