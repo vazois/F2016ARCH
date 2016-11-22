@@ -13,7 +13,9 @@ if argc < 3:
 trace_file = sys.argv[1]
 policy = sys.argv[2]
 
-L1 = Cache("cache.cfg","L1")
+compile()
+
+L1 = Cache("L1.cfg","L1")
 L1.model()
 #L1.print_cfg()
 add_mem(L1)
