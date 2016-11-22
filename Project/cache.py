@@ -60,6 +60,10 @@ class Cache:
     repl_policy = ""
     miss = 0
     hit = 0
+    type = "cache"
+    
+    size = ""
+    replacement = ""
     
     def __init__(self,filename,name):
         self.cfg_file = filename
@@ -111,10 +115,13 @@ class Cache:
     def set_policy(self,policy):
         if policy == p.LRU:
             self.repl_policy = policy
+            self.type = self.type + ", LRU"
         elif policy == p.RANDOM:
             self.repl_policy = policy
+            self.type = self.type + ", Random"
         elif policy == p.PLRU:
             self.repl_policy = policy
+            self.type = self.type + ", Pseudo LRU"
         else:
             print "Chosen policy (",policy,") not supported!!!"
             print "Supported Replacement Policies..."
@@ -134,6 +141,7 @@ class Cache:
             data = line.strip().split("=")
         
             if data[0].strip() is "C":
+                self.size = data[1].strip()
                 if data[1].find('K') > 0:
                     data[1] = str(1024 * int(data[1].split('K')[0]))
                 elif data[1].find('M') > 0:

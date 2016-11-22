@@ -23,6 +23,10 @@ L2.model()
 add_mem(L2)
 #L2.print_cfg()
 
+L3 = Cache("L3.cfg","L3")
+L3.model()
+add_mem(L3)
+
 
 DDR = RAM("ram.cfg","ddr3")
 DDR.model()

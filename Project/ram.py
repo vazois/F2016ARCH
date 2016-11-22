@@ -41,6 +41,8 @@ class RAM:
     arg_list=list()
     miss = 0
     hit = 0
+    type = "ram"
+    size = ""
     #########################
     def __init__(self,filename,name):
         self.cfg_file = filename
@@ -88,6 +90,7 @@ class RAM:
             data = line.strip().split("=")
         
             if data[0].strip() is "C":
+                self.size = data[1].strip()
                 if data[1].find('M') > 0:
                     data[1] = str(1024 * 1024 * int(data[1].split('M')[0]))
                 elif data[1].find('G') > 0:

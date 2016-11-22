@@ -313,9 +313,12 @@ def policy_multi_level(trace,mem_org):
                 j = j + 1
                 
         iter = iter + 1
+        
+    print "Gathering Statistics..."
+    print ""
     for i in range(len(mem_org)):
-        print mem_org[i].name,":",
-        print "\t( hit:",mem_org[i].hit,", miss:",mem_org[i].miss,")"        
+        print mem_org[i].size,mem_org[i].name,mem_org[i].type,":",
+        print "( hit:",mem_org[i].hit,", miss:",mem_org[i].miss,")"        
     return [22,11]
     
     
