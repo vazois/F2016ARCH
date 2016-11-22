@@ -28,7 +28,7 @@ class Cache:
     names_cache["Area (mm2)"] = "AR"
     
     LRU = "LRU"
-    RANDOM = "RR" 
+    RANDOM = "R" 
     PLRU="PLRU"
     
     C = 0

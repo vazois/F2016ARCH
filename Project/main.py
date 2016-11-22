@@ -15,13 +15,14 @@ trace_file = sys.argv[1]
 compile()
 L1 = Cache("L1.cfg","L1")
 L1.model()
-#L1.print_cfg()
 add_mem(L1)
+#L1.print_cfg()
 
 L2 = Cache("L2.cfg","L2")
 L2.model()
-#L2.print_cfg()
 add_mem(L2)
+#L2.print_cfg()
+
 
 DDR = RAM("ram.cfg","ddr3")
 DDR.model()
