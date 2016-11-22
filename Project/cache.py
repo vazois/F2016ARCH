@@ -1,6 +1,7 @@
 import os
 import math
 import subprocess
+import policies as p
 from cacti import getFLD, getExec
 
 CACTI_FLD = getFLD()
@@ -25,6 +26,10 @@ class Cache:
     names_cache["Stanby leakage per bank(mW)"] = "LBPWR"
 
     names_cache["Area (mm2)"] = "AR"
+    
+    LRU = "LRU"
+    RANDOM = "RR" 
+    PLRU="PLRU"
     
     C = 0
     B = 0
@@ -51,11 +56,32 @@ class Cache:
     
     cfg_file = ""
     cache_name =""
-    cache_arg_list=list()
+    arg_list=list()
+    repl_policy = ""
     
     def __init__(self,filename,name):
         self.cfg_file = filename
         self.cache_name = name
+        self.arg_list = list()
+        
+        self.C = 0
+        self.B = 0
+        self.A = 0
+        self.SETS = 0
+        #Addressing
+        self.OFFSET_MASK = 0
+        self.INDEX_MASK = 0
+        self.TAG_MASK = 0
+        self.OFFSET_BITS = 0
+        self.INDEX_BITS = 0
+        self.TAG_BITS = 0
+        #Access Time
+        self.AT = 0
+        self.RT = 0
+        #Area Properties
+        self.AR = 0
+        
+        self.repl_policy = ""
     
     def printFile(self):
         print self.cfg_file,self.cache_name
@@ -77,7 +103,22 @@ class Cache:
             if f[i].strip() in self.names_cache:
                 #print f[i],"=",v[i]
                 self.values_cache[self.names_cache[f[i].strip()]] = float(v[i])
-        
+    
+    def set_policy(self,policy):
+        if policy == p.LRU:
+            self.repl_policy = policy
+        elif policy == p.RANDOM:
+            self.repl_policy = policy
+        elif policy == p.PLRU:
+            self.repl_policy = policy
+        else:
+            print "Chosen policy (",policy,") not supported!!!"
+            print "Supported Replacement Policies..."
+            print "LRU = Least Recently Used"
+            print "RR = Random Replacement"
+            print "PLRU = Pseudo LRU"
+            exit(1)
+            
     def parse_cfg(self):
         if not os.path.isfile(self.cfg_file):
             print "ERROR: cache.cfg file is missing!!!"
@@ -94,10 +135,14 @@ class Cache:
                 elif data[1].find('M') > 0:
                     data[1] = str(1024 * 1024 * int(data[1].split('M')[0]))
             
-            #print data[0],data[1]
-            #break
-            self.cache_arg_list.append(data[1].strip())
-    
+            if data[0].strip() == "REPL":
+                #self.repl_policy = data[1].strip()
+                self.set_policy(data[1].strip())
+            else:
+                #print data[0],data[1]
+                #break
+                self.arg_list.append(data[1].strip())
+        
         fp.close()
     
     def setup(self):
@@ -113,6 +158,7 @@ class Cache:
     def print_cfg(self):    
         print "__________________________________"
         print "<<<<<    CACHE PROPERTIES    >>>>>"
+        print "<",self.cache_name," cache >"
         print "Cache properties : ",self.C," byte ", self.A ,"- way associative cache with ", self.B, " byte line"
         print "(Tag,Index,Offset) : (", self.TAG_BITS,",",self.INDEX_BITS,",",self.OFFSET_BITS,")"
         print "(Tag Mask,Index Mask,Offset Mask) : (",hex(self.TAG_MASK),",",hex(self.INDEX_MASK),",",hex(self.OFFSET_MASK),")"
@@ -125,13 +171,13 @@ class Cache:
         
     def model(self):
         self.parse_cfg()
-        print "Modeling Cache..."
+        print "Modeling",self.cache_name,"Cache..."
     
-        cfg = self.cache_arg_list
-        cfg.insert(0,CACTI)
-        #print ' '.join(cfg)
+        #cfg = self.arg_list
+        self.arg_list.insert(0,CACTI)
+        #print len(cfg)
         #try:
-        cache = subprocess.Popen(cfg, stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+        cache = subprocess.Popen(self.arg_list, stdout=subprocess.PIPE,stderr=subprocess.PIPE)
         err = False
         if cache.wait() < 0:
             print "Err: Cach cfg not correct!!!"
@@ -147,7 +193,7 @@ class Cache:
         if err:
             exit(1)
 
-        fp = open(cfg[-1],'r')
+        fp = open(self.arg_list[-1],'r')
         lines = fp.readlines()
         f = lines[0].strip().split(",")
         v = lines[1].strip().split(",")

@@ -1,37 +1,13 @@
 import math
 import os.path
 
-from cache_policy_sim import policy_LRU, policy_RANDOM, policy_PLRU
-import definitions as df
+from cache_policy_sim import policy_LRU, policy_RANDOM, policy_PLRU, policy_multi_level
+import policies as p
 
 mem_org = list()
-mem_str = list()
-
-def add_mem_str(strategy):
-    global mem_str
-    mem_str.append(strategy)
-    
 def add_mem(mem):
     global mem_org
     mem_org.append(mem)
-
-def set_policy(policy):
-    global LRU,RANDOM
-    global ACTIVE_POLICY
-    
-    if policy == df.LRU:
-        df.ACTIVE_POLICY = policy
-    elif policy == df.RANDOM:
-        df.ACTIVE_POLICY = policy
-    elif policy == df.PLRU:
-        df.ACTIVE_POLICY = policy
-    else:
-        print "Chosen policy (",policy,") not supported!!!"
-        print "Supported Replacement Policies..."
-        print "LRU = Least Recently Used"
-        print "RR = Random Replacement"
-        print "PLRU = Pseudo LRU"
-        exit(1)
 
 def mask(bits):
     return (1 << bits) - 1
@@ -58,15 +34,18 @@ def parse_trace(filename):
 def simulate_trace(filename):
     global mem_org    
     trace = parse_trace(filename)
-
-    if df.ACTIVE_POLICY == df.LRU:
-        sim = policy_LRU(trace,mem_org)
-    elif df.ACTIVE_POLICY == df.RANDOM:
-        sim = policy_RANDOM(trace,mem_org)
-    elif df.ACTIVE_POLICY == df.PLRU:
-        sim = policy_PLRU(trace,mem_org)
+    
+    if len(mem_org) == 2:
+        if mem_org[0].repl_policy == p.LRU:
+            sim = policy_LRU(trace,mem_org)
+        elif mem_org[0].repl_policy == p.RANDOM:
+            sim = policy_RANDOM(trace,mem_org)
+        elif mem_org[0].repl_policy == p.PLRU:
+            sim = policy_PLRU(trace,mem_org)
+    else:
+        sim = policy_multi_level(trace,mem_org)
         
-
+        
     print "Simulation:",sim[0],sim[1]
 
 

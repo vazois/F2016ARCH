@@ -1,14 +1,11 @@
-import definitions as df
 import random
 import math
+import policies as p
 
 gmem = 0
 
 def extract(val,flag):
-    global OFFSET_BITS, INDEX_BITS, TAG_BITS
-    global OFFSET_MASK, INDEX_MASK, TAG_MASK
     global gmem
-    
     if flag == "OFFSET":
         return (val & gmem.OFFSET_MASK) >> 0
     elif flag == "INDEX":
@@ -76,7 +73,7 @@ def update(set):
     for tag in set:
         set[tag] = sadd(set[tag])
   
-def policy_RANDOM(trace):
+def policy_RANDOM(trace,mem_org):
     global gmem
     gmem = mem_org[0]
     
@@ -132,7 +129,7 @@ def insertAt(path):
         
     return [pos,path]
 
-def policy_PLRU(trace):
+def policy_PLRU(trace,mem_org):
     global gmem
     gmem = mem_org[0]
     
@@ -177,6 +174,142 @@ def policy_PLRU(trace):
     print "Miss Percentage: ",(float(miss)/memreq)*100,"%"        
     
     return [miss,memreq]    
+
+
+def fetch(memory,memorg,addr):
+    gmem = memorg        
+    offset = extract(addr,"OFFSET")
+    index = extract(addr,"INDEX")
+    tag = extract(addr,"TAG")
+    
+    if len(set) < gmem.A:
+        #if len(set) < gmem
+        if memorg.repl_policy == p.LRU:
+            memory[0][index][tag] = 0
+            memory[1][index].insert(0,tag)
+        elif memorg.repl_policy == p.PLRU:
+            path = memory[1][index]
+            ret = insertAt(path)
+            memory[0][index][ret[0]] = tag
+            memory[1][index] = ret[1]
+        elif memorg.repl_policy == p.RANDOM:
+            memory[0][index][tag] = 0
+    else:
+        evictTag=0
+        if memorg.repl_policy == p.LRU:                    
+            evictTag = memory[1][index][-1]
+            del memory[1][index][-1]
+            memory[1][index].insert(0,tag)
+            memory[0][index].pop(evictTag)
+            memory[0][index][tag]=0
+        elif memorg.repl_policy == p.PLRU:                    
+            ret = insertAt(memory[1][index])
+            evictTag = memory[0][index][ret[0]]
+            memory[0][index][ret[0]] = tag
+            memory[1][index] = ret[1]
+        elif memorg.repl_policy == p.RANDOM:
+            evictTag = random.sample(set,2)[0]                
+            memory[0][index].pop(evictTag)
+            memory[0][index][tag] = 0
             
+
+def policy_multi_level(trace,mem_org):
+    global gmem
+    
+    memory = list()
+    print "Building Memory Hierarchy..."
+    for i in range(len(mem_org) - 1):
+        if mem_org[i].repl_policy == p.LRU:
+            print "Initializing",mem_org[i].cache_name,"cache with LRU replacement policy..."
+            memory.append([dict(),dict()])
+            for j in range(mem_org[i].SETS):
+                memory[i][0][j] = dict()
+                memory[i][1][j] = list()
+        elif mem_org[i].repl_policy == p.PLRU:
+            print "Initializing",mem_org[i].cache_name,"cache with PLRU replacement policy..."
+            memory.append([dict(),dict()])
+            for j in range(mem_org[i].SETS):
+                memory[i][0][j] = [0 for k in range(mem_org[i].A)]
+                memory[i][1][j] = 0
+        elif mem_org[i].repl_policy == p.RANDOM:
+            print "Initializing",mem_org[i].cache_name,"cache with RANDOM replacement policy..."
+            memory.append([dict()])
+            for j in range(mem_org[i].SETS):
+                memory[i][0][j] = dict()
+    
+    
+    miss = 0
+    memreq = len(trace)
+    iter = 0
+    hit = False
+    print "Simulating multi level hierarchy..."
+    #gmem = mem_org[0]
+    
+    for addr in trace:
+        hit = False
+        hit_level = len(mem_org)-2
+        set = 0
+        for i in range(len(mem_org)-1):
+            gmem = mem_org[i]        
+            offset = extract(addr,"OFFSET")
+            index = extract(addr,"INDEX")
+            tag = extract(addr,"TAG")
+            
+            set = memory[i][0][index]
+            if tag in set:
+                hit = True
+                hit_level = i
+                break
+            
+        
+        for i in range(hit_level,-1,-1):
+            gmem = mem_org[i]        
+            offset = extract(addr,"OFFSET")
+            index = extract(addr,"INDEX")
+            tag = extract(addr,"TAG")
+            
+            if len(set) < gmem.A:
+                #if len(set) < gmem
+                if mem_org[i].repl_policy == p.LRU:
+                    memory[i][0][index][tag] = 0
+                    memory[i][1][index].insert(0,tag)
+                elif mem_org[i].repl_policy == p.PLRU:
+                    path = memory[i][1][index]
+                    ret = insertAt(path)
+                    memory[i][0][index][ret[0]] = tag
+                    memory[i][1][index] = ret[1]
+                elif mem_org[i].repl_policy == p.RANDOM:
+                    memory[i][0][index][tag] = 0
+            else:
+                evictTag=0
+                if mem_org[i].repl_policy == p.LRU:                    
+                    evictTag = memory[i][1][index][-1]
+                    del memory[i][1][index][-1]
+                    memory[i][1][index].insert(0,tag)
+                    memory[i][0][index].pop(evictTag)
+                    memory[i][0][index][tag]=0
+                elif mem_org[i].repl_policy == p.PLRU:                    
+                    ret = insertAt(memory[i][1][index])
+                    evictTag = memory[i][0][index][ret[0]]
+                    memory[i][0][index][ret[0]] = tag
+                    memory[i][1][index] = ret[1]
+                elif mem_org[i].repl_policy == p.RANDOM:
+                    evictTag = random.sample(set,2)[0]                
+                    memory[i][0][index].pop(evictTag)
+                    memory[i][0][index][tag] = 0
+                
+                #if i < len(mem_org)-2:
+                    #evictAddr = (evictTag) &
+                #    return [22,11]
+                    
+                #print "t:",hex(tag),"i:",hex(index),"o:",hex(offset)
+                #print "t:",hex(evictTag),"i:",hex(index)
+                
+                #return [22,11]
+                
+    return [22,11]
+    
+    
+         
         
     
