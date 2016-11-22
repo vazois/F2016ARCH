@@ -13,6 +13,10 @@ def extract(val,flag):
     elif flag == "TAG":
         return (val & gmem.TAG_MASK) >> (gmem.OFFSET_BITS + gmem.INDEX_BITS)
 
+def concat(tag,index):
+    global gmem
+    return (tag << (gmem.OFFSET_BITS + gmem.INDEX_BITS)) | (index << gmem.OFFSET_BITS)
+
 def sadd(v):
     return v if v == (df.A - 1) else v + 1
 
@@ -175,14 +179,16 @@ def policy_PLRU(trace,mem_org):
     
     return [miss,memreq]    
 
-
 def fetch(memory,memorg,addr):
+    global gmem
     gmem = memorg        
     offset = extract(addr,"OFFSET")
     index = extract(addr,"INDEX")
     tag = extract(addr,"TAG")
-    
-    if len(set) < gmem.A:
+    evictTag=-1
+    #print "t:",hex(tag),"i:",hex(index),"o:",hex(offset)
+    #print memory[0][index]
+    if len(memory[0][index]) < gmem.A:
         #if len(set) < gmem
         if memorg.repl_policy == p.LRU:
             memory[0][index][tag] = 0
@@ -212,6 +218,7 @@ def fetch(memory,memorg,addr):
             memory[0][index].pop(evictTag)
             memory[0][index][tag] = 0
             
+    return evictTag
 
 def policy_multi_level(trace,mem_org):
     global gmem
@@ -220,19 +227,19 @@ def policy_multi_level(trace,mem_org):
     print "Building Memory Hierarchy..."
     for i in range(len(mem_org) - 1):
         if mem_org[i].repl_policy == p.LRU:
-            print "Initializing",mem_org[i].cache_name,"cache with LRU replacement policy..."
+            print "Initializing",mem_org[i].name,"cache with LRU replacement policy..."
             memory.append([dict(),dict()])
             for j in range(mem_org[i].SETS):
                 memory[i][0][j] = dict()
                 memory[i][1][j] = list()
         elif mem_org[i].repl_policy == p.PLRU:
-            print "Initializing",mem_org[i].cache_name,"cache with PLRU replacement policy..."
+            print "Initializing",mem_org[i].name,"cache with PLRU replacement policy..."
             memory.append([dict(),dict()])
             for j in range(mem_org[i].SETS):
                 memory[i][0][j] = [0 for k in range(mem_org[i].A)]
                 memory[i][1][j] = 0
         elif mem_org[i].repl_policy == p.RANDOM:
-            print "Initializing",mem_org[i].cache_name,"cache with RANDOM replacement policy..."
+            print "Initializing",mem_org[i].name,"cache with RANDOM replacement policy..."
             memory.append([dict()])
             for j in range(mem_org[i].SETS):
                 memory[i][0][j] = dict()
@@ -255,19 +262,34 @@ def policy_multi_level(trace,mem_org):
             index = extract(addr,"INDEX")
             tag = extract(addr,"TAG")
             
-            set = memory[i][0][index]
-            if tag in set:
+            #set = memory[i][0][index]
+            if tag in memory[i][0][index]:
                 hit = True
                 hit_level = i
+                mem_org[i].hit = mem_org[i].hit + 1
                 break
-            
+            else:
+                mem_org[i].miss = mem_org[i].miss + 1
         
+        if not hit:#Look in RAM
+            mem_org[-1].hit = mem_org[-1].hit + 1
+        
+        #print "level:",hit_level
         for i in range(hit_level,-1,-1):
-            gmem = mem_org[i]        
-            offset = extract(addr,"OFFSET")
-            index = extract(addr,"INDEX")
-            tag = extract(addr,"TAG")
+            #memorg = mem_org[i]
+            #memory_level = system[i]
+            evictTag=fetch(memory[i],mem_org[i],addr)
+            gmem = mem_org[i]
+            j = i
+            while evictTag != -1 and (j < len(mem_org)-2):
+            #if evictTag != -1 and (i < len(mem_org)-2):
+                evictAddr = concat(tag,index)
+                evictTag = fetch(memory[j],mem_org[j],evictAddr)
+                j = j + 1
+                
             
+            
+            '''            
             if len(set) < gmem.A:
                 #if len(set) < gmem
                 if mem_org[i].repl_policy == p.LRU:
@@ -304,9 +326,12 @@ def policy_multi_level(trace,mem_org):
                     
                 #print "t:",hex(tag),"i:",hex(index),"o:",hex(offset)
                 #print "t:",hex(evictTag),"i:",hex(index)
-                
+               
                 #return [22,11]
-                
+              '''
+    
+    for i in range(len(mem_org)):
+        print mem_org[i].name,",",mem_org[i].hit        
     return [22,11]
     
     

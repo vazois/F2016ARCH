@@ -55,14 +55,18 @@ class Cache:
     ADDR_WIDTH = 32
     
     cfg_file = ""
-    cache_name =""
+    name =""
     arg_list=list()
     repl_policy = ""
+    miss = 0
+    hit = 0
     
     def __init__(self,filename,name):
         self.cfg_file = filename
-        self.cache_name = name
+        self.name = name
         self.arg_list = list()
+        self.miss = 0
+        self.hit = 0
         
         self.C = 0
         self.B = 0
@@ -158,7 +162,7 @@ class Cache:
     def print_cfg(self):    
         print "__________________________________"
         print "<<<<<    CACHE PROPERTIES    >>>>>"
-        print "<",self.cache_name," cache >"
+        print "<",self.name," cache >"
         print "Cache properties : ",self.C," byte ", self.A ,"- way associative cache with ", self.B, " byte line"
         print "(Tag,Index,Offset) : (", self.TAG_BITS,",",self.INDEX_BITS,",",self.OFFSET_BITS,")"
         print "(Tag Mask,Index Mask,Offset Mask) : (",hex(self.TAG_MASK),",",hex(self.INDEX_MASK),",",hex(self.OFFSET_MASK),")"
@@ -171,7 +175,7 @@ class Cache:
         
     def model(self):
         self.parse_cfg()
-        print "Modeling",self.cache_name,"Cache..."
+        print "Modeling",self.name,"Cache..."
     
         #cfg = self.arg_list
         self.arg_list.insert(0,CACTI)

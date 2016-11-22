@@ -37,13 +37,17 @@ class RAM:
     AR = 0
     
     cfg_file = ""
-    ram_name =""
+    name =""
     arg_list=list()
+    miss = 0
+    hit = 0
     #########################
     def __init__(self,filename,name):
         self.cfg_file = filename
-        self.ram_name = name
+        self.name = name
         self.arg_list = list()
+        self.miss = 0
+        self.hit = 0
         
         #########################
         self.C = 0
@@ -98,7 +102,7 @@ class RAM:
     def print_cfg(self):
         print "__________________________________"
         print "<<<<<    RAM   PROPERTIES    >>>>>"
-        print "<",self.ram_name," ram >"
+        print "<",self.name," ram >"
         print "RAM Capacity :",self.C, "bytes"
         print "RAM Block size :", self.B, "bytes"
         print "RAM Data bus width :", self.DW, "bits"
@@ -108,7 +112,7 @@ class RAM:
         
     def model(self):
         self.parse_cfg()
-        print "Modeling",self.ram_name,"RAM..."
+        print "Modeling",self.name,"RAM..."
     
         cfg = self.arg_list
         cfg.insert(0,CACTI)
