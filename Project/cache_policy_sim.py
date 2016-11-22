@@ -2,23 +2,19 @@ import definitions as df
 import random
 import math
 
-def test_cache():
-    print "Test Cache>>>>>>>>>>>>>>>>>>>>>"
-    print "Cache properties : ",df.C," byte ", df.A ,"- way associative cache with ", df.B, " byte line"
-    print "(Tag,Index,Offset) : (", df.TAG_BITS,",",df.INDEX_BITS,",",df.OFFSET_BITS,")"
-    print "(Tag Mask,Index Mask,Offset Mask) : (",hex(df.TAG_MASK),",",hex(df.INDEX_MASK),",",hex(df.OFFSET_MASK),")"
-    print "Sets :",df.SETS
+gmem = 0
 
 def extract(val,flag):
     global OFFSET_BITS, INDEX_BITS, TAG_BITS
     global OFFSET_MASK, INDEX_MASK, TAG_MASK
+    global gmem
     
     if flag == "OFFSET":
-        return (val & df.OFFSET_MASK) >> 0
+        return (val & gmem.OFFSET_MASK) >> 0
     elif flag == "INDEX":
-        return (val & df.INDEX_MASK) >> df.OFFSET_BITS
+        return (val & gmem.INDEX_MASK) >> gmem.OFFSET_BITS
     elif flag == "TAG":
-        return (val & df.TAG_MASK) >> (df.OFFSET_BITS + df.INDEX_BITS)
+        return (val & gmem.TAG_MASK) >> (gmem.OFFSET_BITS + gmem.INDEX_BITS)
 
 def sadd(v):
     return v if v == (df.A - 1) else v + 1
@@ -29,13 +25,15 @@ def find(lset,tag):
             return i
     return -1
         
-def policy_LRU(trace):
+def policy_LRU(trace,mem_org):
+    global gmem
+    gmem = mem_org[0]
+    
     cache = dict()
     lru = dict()
-    for i in range(df.SETS):
+    for i in range(gmem.SETS):
         cache[i] = dict()
         lru[i] = list()
-    
     
     miss = 0
     memreq = len(trace)
@@ -47,16 +45,11 @@ def policy_LRU(trace):
         index = extract(addr,"INDEX")
         tag = extract(addr,"TAG")
         
-        #print "a:",hex(addr),"t:",hex(tag),"i:",hex(index),"o:",hex(offset)
-        #print "t:",hex(tag),"i:",hex(index),"o:",hex(offset)
-        #print "t:",tag,"i:",index,"o:",offset,
-        
         set = cache[index]
         lset = lru[index]
-        
         if tag not in set:
             miss=miss+1
-            if len(set) < df.A:
+            if len(set) < gmem.A:
                 set[tag]=0
                 lset.insert(0,tag)
             else:
@@ -76,16 +69,21 @@ def policy_LRU(trace):
     print "Misses: ", miss
     print "Memory Requests: ",memreq
     print "Miss Percentage: ",(float(miss)/memreq)*100,"%"
+    
+    return [miss,memreq]
 
 def update(set):
     for tag in set:
         set[tag] = sadd(set[tag])
   
 def policy_RANDOM(trace):
+    global gmem
+    gmem = mem_org[0]
     
     cache = dict()
-    for i in range(df.SETS):
+    for i in range(gmem.SETS):
         cache[i] = dict()
+        
     miss = 0
     memreq = len(trace)
     iter = 0
@@ -102,7 +100,7 @@ def policy_RANDOM(trace):
         set = cache[index]
         if tag not in set:
             miss = miss + 1
-            if len(set) < df.A:
+            if len(set) < gmem.A:
                 set[tag] = 0
             else:                
                 LRUtag = random.sample(set,2)[0]                
@@ -115,12 +113,14 @@ def policy_RANDOM(trace):
     print "Misses: ", miss
     print "Memory Requests: ",memreq
     print "Miss Percentage: ",(float(miss)/memreq)*100,"%"
+    return [miss,memreq]
+    
    
 def insertAt(path):
     pos = 0
-    step = df.A/2
+    step = gmem.A/2
     index = step - 1
-    levels = int(math.log(df.A,2))
+    levels = int(math.log(gmem.A,2))
 
     for i in range(levels):
         bit = (path & (1<<index)) >> index
@@ -130,13 +130,18 @@ def insertAt(path):
         step = step >> 1
         index = (index + step) if bit == 1 else (index - step)
         
-    return pos
+    return [pos,path]
 
 def policy_PLRU(trace):
+    global gmem
+    gmem = mem_org[0]
+    
     cache = dict()
+    #test = dict()
     lru=dict()
-    for i in range(df.SETS):
-        cache[i] = [0 for j in range(df.A)]
+    for i in range(gmem.SETS):
+        cache[i] = [0 for j in range(gmem.A)]
+        #test[i] = dict()
         lru[i] = 0
     
     
@@ -154,15 +159,24 @@ def policy_PLRU(trace):
         path = lru[index]
         
         if tag not in set:
+            #if tag in test[index]:
+            #    print set,tag,index
             miss = miss + 1
-            pos = insertAt(path)
-            set[pos] = tag
+            ret = insertAt(path)
+            set[ret[0]] = tag
+            lru[index] = ret[1]
+            #if tag in test[index]:
+            #    print set,tag,index,ret[0]
+            #    raw_input("Press to continue...")
+                
+        #test[index][tag]=0
     
     print "Gathering statistics..."
     print "Misses: ", miss
     print "Memory Requests: ",memreq
     print "Miss Percentage: ",(float(miss)/memreq)*100,"%"        
-        
+    
+    return [miss,memreq]    
             
         
     
