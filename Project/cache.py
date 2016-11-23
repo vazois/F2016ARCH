@@ -65,12 +65,17 @@ class Cache:
     size = ""
     replacement = ""
     
+    timeAT = 0
+    timeRT = 0
+    
     def __init__(self,filename,name):
         self.cfg_file = filename
         self.name = name
         self.arg_list = list()
         self.miss = 0
         self.hit = 0
+        self.timeAT = 0
+        self.timeRT = 0
         
         self.C = 0
         self.B = 0
@@ -115,13 +120,10 @@ class Cache:
     def set_policy(self,policy):
         if policy == p.LRU:
             self.repl_policy = policy
-            self.type = self.type + ", LRU"
         elif policy == p.RANDOM:
             self.repl_policy = policy
-            self.type = self.type + ", Random"
         elif policy == p.PLRU:
             self.repl_policy = policy
-            self.type = self.type + ", Pseudo LRU"
         else:
             print "Chosen policy (",policy,") not supported!!!"
             print "Supported Replacement Policies..."
@@ -166,6 +168,17 @@ class Cache:
         self.OFFSET_MASK = mask(self.OFFSET_BITS)
         self.INDEX_MASK = mask(self.INDEX_BITS) << self.OFFSET_BITS
         self.TAG_MASK = mask(self.TAG_BITS) << (self.OFFSET_BITS + self.INDEX_BITS)
+    
+    def access(self):
+        self.timeAT += int(math.ceil(self.AT))
+        self.timeRT += int(math.ceil(self.RT))
+    
+    def print_short_cfg(self,demands):
+        miss_rate = (float(self.miss)/demands)*100
+        hit_rate = (float(self.hit)/demands)*100
+        self.timeAT = float(self.timeAT)/(10**6)
+        print "{:>6} {:>6} {:>6} {:>9} {:>9}".format(self.size, self.name, self.type,str(self.hit),str(self.miss)),
+        print "{:8.2f} {:8.2f} {:10.4f}".format(hit_rate,miss_rate, self.timeAT)
     
     def print_cfg(self):    
         print "__________________________________"

@@ -23,6 +23,22 @@ def find(lset,tag):
             return i
     return -1
 
+def insertAt(path):
+    pos = 0
+    step = gmem.A/2
+    index = step - 1
+    levels = int(math.log(gmem.A,2))
+
+    for i in range(levels):
+        bit = (path & (1<<index)) >> index
+        path = path ^ (1 << index)
+        
+        pos = bit * step + pos
+        step = step >> 1
+        index = (index + step) if bit == 1 else (index - step)
+        
+    return [pos,path]
+
 def fetch(memory,memorg,addr,hit):
     global gmem
     gmem = memorg        
@@ -166,22 +182,6 @@ def policy_RANDOM(trace,mem_org):
     print "Memory Requests: ",memreq
     print "Miss Percentage: ",(float(miss)/memreq)*100,"%"
     return [miss,memreq]
-      
-def insertAt(path):
-    pos = 0
-    step = gmem.A/2
-    index = step - 1
-    levels = int(math.log(gmem.A,2))
-
-    for i in range(levels):
-        bit = (path & (1<<index)) >> index
-        path = path ^ (1 << index)
-        
-        pos = bit * step + pos
-        step = step >> 1
-        index = (index + step) if bit == 1 else (index - step)
-        
-    return [pos,path]
 
 def policy_PLRU(trace,mem_org):
     global gmem
@@ -281,11 +281,13 @@ def policy_multi_level(trace,mem_org):
                 hit = True
                 hit_level = i
                 mem_org[i].hit = mem_org[i].hit + 1
+                mem_org[i].access()
                 break
             else:
                 mem_org[i].miss = mem_org[i].miss + 1
         
         if not hit:#Look in RAM if not find in caches
+            mem_org[-1].access()
             mem_org[-1].hit = mem_org[-1].hit + 1
         
         #print "level:",hit_level
@@ -315,11 +317,13 @@ def policy_multi_level(trace,mem_org):
         iter = iter + 1
         
     print "Gathering Statistics..."
-    print ""
+    print "\n{:>6} {:>6} {:>6} {:>9} {:>9}".format("SIZE","LEVEL","TYPE","HITS","MISSES"),
+    print "{:>8} {:>8} {:>10}".format("HIT(%)","MISS(%)","TIME(ms)")
     for i in range(len(mem_org)):
-        print mem_org[i].size,mem_org[i].name,mem_org[i].type,":",
-        print "( hit:",mem_org[i].hit,", miss:",mem_org[i].miss,")"        
-    return [22,11]
+        mem_org[i].print_short_cfg(len(trace))
+        #print "\t",mem_org[i].size,"\t",mem_org[i].name,"\t",mem_org[i].type,":",
+        #print "\t( hit:",mem_org[i].hit,", miss:",mem_org[i].miss,")"        
+    
     
     
          

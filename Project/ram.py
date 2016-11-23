@@ -43,6 +43,10 @@ class RAM:
     hit = 0
     type = "ram"
     size = ""
+    
+    timeAT = 0
+    timeRT = 0
+    
     #########################
     def __init__(self,filename,name):
         self.cfg_file = filename
@@ -50,6 +54,9 @@ class RAM:
         self.arg_list = list()
         self.miss = 0
         self.hit = 0
+        
+        self.timeAT = 0
+        self.timeRT = 0
         
         #########################
         self.C = 0
@@ -101,6 +108,17 @@ class RAM:
             self.arg_list.append(data[1].strip())
     
         fp.close()
+    
+    def access(self):
+        self.timeAT += int(math.ceil(self.AT))
+        self.timeRT += int(math.ceil(self.RT))
+    
+    def print_short_cfg(self,demands):
+        miss_rate = (float(self.miss)/demands)*100
+        hit_rate = (float(self.hit)/demands)*100
+        self.timeAT = float(self.timeAT)/(10**6)
+        print "{:>6} {:>6} {:>6} {:>9} {:>9}".format(self.size, self.name, self.type,str(self.hit),str(self.miss)),
+        print "{:8.2f} {:8.2f} {:10.4f}".format(hit_rate,miss_rate, self.timeAT)
     
     def print_cfg(self):
         print "__________________________________"

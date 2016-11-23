@@ -36,18 +36,6 @@ def simulate_trace(filename):
     trace = parse_trace(filename)
     
     sim = policy_multi_level(trace,mem_org)
-    #if len(mem_org) == 2:
-    #    if mem_org[0].repl_policy == p.LRU:
-    #        sim = policy_LRU(trace,mem_org)
-    #    elif mem_org[0].repl_policy == p.RANDOM:
-    #        sim = policy_RANDOM(trace,mem_org)
-    #    elif mem_org[0].repl_policy == p.PLRU:
-    #        sim = policy_PLRU(trace,mem_org)
-    #else:
-    #    sim = policy_multi_level(trace,mem_org)
-        
-        
-    #print "Simulation:",sim[0],sim[1]
 
 
     
