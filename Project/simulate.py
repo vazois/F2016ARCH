@@ -36,7 +36,7 @@ def simulate_trace(filename):
     trace = parse_trace(filename)
     
     sim = policy_multi_level(trace,mem_org)
-
+    #policy_LRU(trace,mem_org)
 
     
     

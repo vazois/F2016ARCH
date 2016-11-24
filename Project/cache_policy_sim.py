@@ -269,7 +269,7 @@ def policy_multi_level(trace,mem_org):
     
     for addr in trace:
         hit = False
-        hit_level = len(mem_org)-2
+        hit_level = len(mem_org)-1
         for i in range(len(mem_org)-1):#Search for data across the memory hierarchy
             gmem = mem_org[i]        
             offset = extract(addr,"OFFSET")
@@ -297,20 +297,23 @@ def policy_multi_level(trace,mem_org):
             continue
             
             
-        for i in range(hit_level,-1,-1):
+        for i in range(hit_level-1,-1,-1):
             #memorg = mem_org[i]
             #memory_level = system[i]
             evictTag=fetch(memory[i],mem_org[i],addr,hit)
-            hit=False
-            gmem = mem_org[i]
-            offset = extract(addr,"OFFSET")
-            index = extract(addr,"INDEX")
-            tag = extract(addr,"TAG")
+            hit=False            
             #print "line:",i,memory[i][0][index],"a:",hex(addr),"t:", hex(tag),"h:", hex(index),"i:",iter
             j = i+1
             while evictTag != -1 and (j < len(mem_org)-2):
             #if evictTag != -1 and (i < len(mem_org)-2):
-                evictAddr = concat(tag,index)
+                evictAddr = concat(evictTag,index)
+                gmem = mem_org[j]
+                eoffset = extract(evictAddr,"OFFSET")
+                eindex = extract(evictAddr,"INDEX")
+                etag = extract(evictAddr,"TAG")
+                if etag in memory[j][0][eindex]:
+                    break 
+                
                 evictTag = fetch(memory[j],mem_org[j],evictAddr,hit)
                 j = j + 1
                 
@@ -319,11 +322,16 @@ def policy_multi_level(trace,mem_org):
     print "Gathering Statistics..."
     print "\n{:>6} {:>6} {:>6} {:>9} {:>9}".format("SIZE","LEVEL","TYPE","HITS","MISSES"),
     print "{:>8} {:>8} {:>10}".format("HIT(%)","MISS(%)","TIME(ms)")
+    time = 0
+    hits_total = 0
     for i in range(len(mem_org)):
         mem_org[i].print_short_cfg(len(trace))
+        hits_total+= mem_org[i].hit
+        time += mem_org[i].timeAT
         #print "\t",mem_org[i].size,"\t",mem_org[i].name,"\t",mem_org[i].type,":",
         #print "\t( hit:",mem_org[i].hit,", miss:",mem_org[i].miss,")"        
-    
+    print "\nEstimated execution time:{:10.4f}".format(time)
+    print "Demands: ",len(trace),", total hits:",hits_total
     
     
          
