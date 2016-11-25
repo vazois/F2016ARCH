@@ -320,8 +320,9 @@ def policy_multi_level(trace,mem_org):
         iter = iter + 1
         
     print "Gathering Statistics..."
-    print "\n{:>6} {:>6} {:>6} {:>9} {:>9}".format("SIZE","LEVEL","TYPE","HITS","MISSES"),
-    print "{:>8} {:>8} {:>10}".format("HIT(%)","MISS(%)","TIME(ms)")
+    print "\n{:>6} {:>6} {:>6} {:>9} {:>9} {:>9}".format("SIZE","LEVEL","TYPE","POLICY","HITS","MISSES"),
+    print "{:>8} {:>8} {:>11} {:>10}".format("HIT(%)","MISS(%)","ACCESS(ns)","TIME(ms)"),
+    print "{:>12} {:>12}".format("AREA(mm^2)","Power(mW)")
     time = 0
     hits_total = 0
     for i in range(len(mem_org)):

@@ -23,13 +23,9 @@ class Cache:
     names_cache["Random cycle time (ns)"] = "RT"
 
     names_cache["Dynamic read power (mW)"] = "RPWR"
-    names_cache["Stanby leakage per bank(mW)"] = "LBPWR"
+    names_cache["Stanby leakage per bank(mW)"] = "LPWR"
 
     names_cache["Area (mm2)"] = "AR"
-    
-    LRU = "LRU"
-    RANDOM = "R" 
-    PLRU="PLRU"
     
     C = 0
     B = 0
@@ -51,6 +47,8 @@ class Cache:
 
     #Area Properties
     AR = 0
+    RPWR = 0
+    LPWR = 0
     
     ADDR_WIDTH = 32
     
@@ -58,6 +56,7 @@ class Cache:
     name =""
     arg_list=list()
     repl_policy = ""
+    policy_name = "-"
     miss = 0
     hit = 0
     type = "cache"
@@ -72,10 +71,12 @@ class Cache:
         self.cfg_file = filename
         self.name = name
         self.arg_list = list()
+        self.policy_name = "-"
         self.miss = 0
         self.hit = 0
         self.timeAT = 0
         self.timeRT = 0
+        self.RPWR = 0
         
         self.C = 0
         self.B = 0
@@ -106,6 +107,8 @@ class Cache:
         self.AT=float(self.values_cache["AT"])
         self.RT=float(self.values_cache["RT"])
         self.AR = float(self.values_cache["AR"])
+        self.RPWR = float(self.values_cache["RPWR"])
+        #self.LPWR = float(self.values_cache["LPWR"])
         self.setup()
     
     def set_ram_addr(self,bits):
@@ -120,10 +123,13 @@ class Cache:
     def set_policy(self,policy):
         if policy == p.LRU:
             self.repl_policy = policy
+            self.policy_name = "LRU"
         elif policy == p.RANDOM:
             self.repl_policy = policy
+            self.policy_name = "RR"
         elif policy == p.PLRU:
             self.repl_policy = policy
+            self.policy_name = "PLRU"
         else:
             print "Chosen policy (",policy,") not supported!!!"
             print "Supported Replacement Policies..."
@@ -177,8 +183,10 @@ class Cache:
         miss_rate = (float(self.miss)/demands)*100
         hit_rate = (float(self.hit)/demands)*100
         self.timeAT = float(self.timeAT)/(10**6)
-        print "{:>6} {:>6} {:>6} {:>9} {:>9}".format(self.size, self.name, self.type,str(self.hit),str(self.miss)),
-        print "{:8.2f} {:8.2f} {:10.4f}".format(hit_rate,miss_rate, self.timeAT)
+        print "{:>6} {:>6} {:>6} {:>9}".format(self.size, self.name,self.type,self.policy_name),
+        print "{:>9} {:>9}".format(str(self.hit),str(self.miss)),
+        print "{:8.2f} {:8.2f} {:10.2f} {:10.4f}".format(hit_rate,miss_rate, math.ceil(self.AT), self.timeAT),
+        print "{:12.2f} {:12.2f}".format(self.AR,self.RPWR)
     
     def print_cfg(self):    
         print "__________________________________"

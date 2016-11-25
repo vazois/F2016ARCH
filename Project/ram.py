@@ -22,7 +22,7 @@ class RAM:
     names_ram["Random cycle time (ns)"] = "RT"
 
     names_ram["Dynamic read power (mW)"] = "RPWR"
-    names_ram["Stanby leakage per bank(mW)"] = "LBPWR"
+    names_ram["Stanby leakage per bank(mW)"] = "LPWR"
 
     names_ram["Area (mm2)"] = "AR"
     
@@ -35,6 +35,8 @@ class RAM:
     RT = 0
     #Area Properties
     AR = 0
+    RPWR = 0
+    LPWR = 0
     
     cfg_file = ""
     name =""
@@ -43,6 +45,8 @@ class RAM:
     hit = 0
     type = "ram"
     size = ""
+    repl_policy = ""
+    policy_name = "-"
     
     timeAT = 0
     timeRT = 0
@@ -52,8 +56,11 @@ class RAM:
         self.cfg_file = filename
         self.name = name
         self.arg_list = list()
+        self.repl_policy = "-"
+        self.policy_name = "-"
         self.miss = 0
         self.hit = 0
+        self.RPWR = 0
         
         self.timeAT = 0
         self.timeRT = 0
@@ -79,6 +86,9 @@ class RAM:
     
         self.AT = float(self.values_ram["AT"])
         self.RT = float(self.values_ram["RT"])
+        self.AR = float(self.values_ram["AR"])
+        self.RPWR = float(self.values_ram["RPWR"])
+        #self.LPWR = float(self.values_ram["LPWR"])
     
     def read_mdl(self,f,v):
         for i in range(len(f)):
@@ -117,8 +127,10 @@ class RAM:
         miss_rate = (float(self.miss)/demands)*100
         hit_rate = (float(self.hit)/demands)*100
         self.timeAT = float(self.timeAT)/(10**6)
-        print "{:>6} {:>6} {:>6} {:>9} {:>9}".format(self.size, self.name, self.type,str(self.hit),str(self.miss)),
-        print "{:8.2f} {:8.2f} {:10.4f}".format(hit_rate,miss_rate, self.timeAT)
+        print "{:>6} {:>6} {:>6} {:>9}".format(self.size, self.name,self.type,self.policy_name),
+        print "{:>9} {:>9}".format(str(self.hit),str(self.miss)),
+        print "{:8.2f} {:8.2f} {:10.2f} {:10.4f}".format(hit_rate,miss_rate, math.ceil(self.AT), self.timeAT),
+        print "{:12.2f} {:12.2f}".format(self.AR,self.RPWR)
     
     def print_cfg(self):
         print "__________________________________"

@@ -1,5 +1,5 @@
 #Simulation Variables
 ACTIVE_POLICY = "LRU"
 LRU = "LRU"
-RANDOM = "R" 
+RANDOM = "RR" 
 PLRU="PLRU"

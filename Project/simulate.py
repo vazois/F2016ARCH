@@ -18,7 +18,7 @@ def parse_trace(filename):
         print "ERROR: trace file (",filename,") does not exist!!!"
         exit(1)
     
-    print "Parsing trace file..."
+    print "Parsing trace file (",filename,")..."
     fp = open(filename,'r')
     trace=list()
     lines = fp.readlines()
