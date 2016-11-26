@@ -185,7 +185,7 @@ class Cache:
         self.timeAT = float(self.timeAT)/(10**6)
         print "{:>6} {:>6} {:>6} {:>9}".format(self.size, self.name,self.type,self.policy_name),
         print "{:>9} {:>9}".format(str(self.hit),str(self.miss)),
-        print "{:8.2f} {:8.2f} {:10.2f} {:10.4f}".format(hit_rate,miss_rate, math.ceil(self.AT), self.timeAT),
+        print "{:8.2f} {:8.2f} {:10.2f} {:10.4f}".format(hit_rate,miss_rate, self.AT, self.timeAT),
         print "{:12.2f} {:12.2f}".format(self.AR,self.RPWR)
     
     def print_cfg(self):    

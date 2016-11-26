@@ -22,24 +22,24 @@ if example >=1:
     L1 = Cache("L1.cfg","L1")
     L1.model()
     add_mem(L1)
-    L1.print_cfg()
+    #L1.print_cfg()
 
 if example >=2:
     L2 = Cache("L2.cfg","L2")
     L2.model()
     add_mem(L2)
-    L2.print_cfg()
+    #L2.print_cfg()
 
 if example >=3:
     L3 = Cache("L3.cfg","L3")
     L3.model()
     add_mem(L3)
-    L2.print_cfg()
+    #L2.print_cfg()
 
 
 DDR = RAM("ram.cfg","DDR3")
 DDR.model()
-DDR.print_cfg()
+#DDR.print_cfg()
 add_mem(DDR)
 
 print "----------------------------------"

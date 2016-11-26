@@ -300,8 +300,9 @@ def policy_multi_level(trace,mem_org):
         for i in range(hit_level-1,-1,-1):
             #memorg = mem_org[i]
             #memory_level = system[i]
+            hit=False
             evictTag=fetch(memory[i],mem_org[i],addr,hit)
-            hit=False            
+                        
             #print "line:",i,memory[i][0][index],"a:",hex(addr),"t:", hex(tag),"h:", hex(index),"i:",iter
             j = i+1
             while evictTag != -1 and (j < len(mem_org)-2):
