@@ -27,5 +27,6 @@ compiled correctly
 
 2) The simulator was testing using python 2.7.6 and gcc 4.8.4 in ubuntu
 
+3) Due to their size, not all memtraces mentioned in the report are included.
 
 
