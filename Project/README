@@ -1,0 +1,31 @@
+The simulator works in conjunction with cacti5.3 which is included. Cacti is used to model a given type of memory.
+Users can define their own type of memory using .cfg files. More information about the individual fields in the cfg files
+can be found in cacti53/README.
+As an example, 4 .cfg files are included describing 3 levels of cache and 1 ram memory.
+For each execution of the simulator, the cfg files are parsed and fed to Cacti to generate the corresponding .mdl files.
+These files contain the model for each memory. The model is parsed and its information are printed depending on the
+input of the user (look at later examples). Then for the complete memory hierarchy a simulation is executed for the given
+input trace which is also given as input from the user. The statistics of the simulation are printed at the end.
+The arguments in the .cfg are not all used for cacti. The two parameters FILE , REPL are used to choose the output filename
+of the mdl file and the replacement policy for the given memory level. The available REPL values are LRU, PLRU, RR.
+
+An example execution is as follows
+
+python main.py traces/art-1M.memtrace 1 s
+
+The first argument is the trace file, the second is the example number and the third is used to expand or reduce the information
+printed from the simulator. Using (f) outputs the complete information from the simulation and models while (s) only outputs the
+simulation statistics.
+The predefined examples (1,2,3) choose between 1,2 or 3 memory levels for the cache. Each example assumes for the lowest
+level to be ram.
+
+
+Notes:
+1) When the simulator is called it tries to the code in cacti53. If there is an error during compilation the executable will not
+be generated and the simulation will stop. Alternately, you can type make inside the cacti53 folder to ensure everything is
+compiled correctly
+
+2) The simulator was testing using python 2.7.6 and gcc 4.8.4 in ubuntu
+
+
+
